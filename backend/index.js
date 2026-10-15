@@ -1,7 +1,8 @@
 import express from "express";
-import dotenv from "dotenv";
+import connectDb from "./config/db.js";
 const app = express();
-dotenv.config();
+
+import "dotenv/config";
 
 const PORT = process.env.PORT || 3000;
 
@@ -11,7 +12,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 import userRoute from "./routes/user.route.js";
-import connectDb from "./config/db.js";
 
 // API's
 app.use("/api/v1/user", userRoute);
