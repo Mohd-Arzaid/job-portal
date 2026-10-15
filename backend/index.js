@@ -21,10 +21,12 @@ app.use(cookieParser());
 
 import userRoute from "./routes/user.route.js";
 import companyRouter from "./routes/company.route.js";
+import jobRouter from "./routes/job.route.js";
 
 // API's
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/company", companyRouter);
+app.use("/api/v1/job", jobRouter);
 
 app.listen(PORT, () => {
   connectDb();
