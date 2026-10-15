@@ -20,9 +20,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 import userRoute from "./routes/user.route.js";
+import companyRouter from "./routes/company.route.js";
 
 // API's
 app.use("/api/v1/user", userRoute);
+app.use("/api/v1/company", companyRouter);
 
 app.listen(PORT, () => {
   connectDb();
