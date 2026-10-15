@@ -157,3 +157,35 @@ export const login = async (req, res) => {
     });
   }
 };
+
+export const getProfile = async (req, res) => {
+  try {
+    // 1. Get authenticated user's ID
+    const userId = req.user.userId;
+
+    // 2. Find user in database
+    const user = await User.findById(userId).select("-password");
+
+    // 3. Check if user exists
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // 4. Return user profile
+    return res.status(200).json({
+      success: true,
+      message: "Profile fetched successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
