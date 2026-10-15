@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    fullname: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["student", "recruiter"],
       required: true,
+    },
+    profile: {
+      profilePhoto: {
+        type: String, // Store the Cloudinary URL of the user's profile photo
+        default: "",
+      },
     },
   },
   { timestamps: true }, // automatically add createdAt aur updatedAt

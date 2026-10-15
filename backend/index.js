@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 import userRoute from "./routes/user.route.js";
-import connectDb from "./utils/db.js";
+import connectDb from "./config/db.js";
 
 // API's
 app.use("/api/v1/user", userRoute);
