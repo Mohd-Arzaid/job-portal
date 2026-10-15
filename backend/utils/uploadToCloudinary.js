@@ -1,5 +1,5 @@
-import cloudinary from "../config/cloudinary";
-import convertFileToDataUri from "./convertFileToDataUri";
+import cloudinary from "../config/cloudinary.js";
+import convertFileToDataUri from "./convertFileToDataUri.js";
 
 const uploadToCloudinary = async (file) => {
   const fileUri = convertFileToDataUri(file);
