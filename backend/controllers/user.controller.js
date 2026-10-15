@@ -1,14 +1,14 @@
 import { User } from "../models/user.model.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
-import { registerSchema } from "../validators/user.validator.js";
+import { loginSchema, registerSchema } from "../validators/user.validator.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
   try {
-    // validate request body
+    // 1. Validate request body
     const result = registerSchema.safeParse(req.body);
 
-    // if validation fails
     if (!result.success) {
       return res.status(400).json({
         success: false,
@@ -19,6 +19,7 @@ export const register = async (req, res) => {
 
     const { fullName, email, phoneNumber, password, role } = result.data;
 
+    // 2. Check if email is already registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
@@ -27,14 +28,14 @@ export const register = async (req, res) => {
       });
     }
 
-    // Get the uploaded file from Multer middleware
+    // 3. Get the uploaded file from Multer middleware and upload profile photo to Cloudinary
     const file = req.file;
     const profilePhotoUrl = file ? await uploadToCloudinary(file) : "";
 
-    // Hash the password before saving it
+    // 4. Hash the password before saving it
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create a new user in MongoDB
+    // 5. Create a new user in MongoDB
     const user = await User.create({
       fullName,
       email,
@@ -46,7 +47,7 @@ export const register = async (req, res) => {
       },
     });
 
-    // Send success response without exposing the password
+    // 6. Return success response without exposing the password
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
@@ -60,7 +61,95 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    // 7. Handle unexpected server errors
+    console.error("Registration error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    // 1. Validate request body
+    const result = loginSchema.safeParse(req.body);
+
+    // if validation fails
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Failed",
+        errors: result.error.issues.map((issue) => issue.message),
+      });
+    }
+
+    const { email, password, role } = result.data;
+
+    // 2. Find user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // 3. Verify user's role
+    if (user.role !== role) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid role",
+      });
+    }
+
+    // 4. Compare password with hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // 5. Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      },
+    );
+
+    // 6. Set JWT token in an HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    // 7. Return successful login response
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        profile: user.profile,
+      },
+    });
+  } catch (error) {
+    // 8. Handle unexpected server errors
+    console.error("Login error:", error);
 
     return res.status(500).json({
       success: false,

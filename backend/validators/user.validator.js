@@ -15,3 +15,16 @@ export const registerSchema = z.object({
         : "Invalid role. Select student or recruiter",
   }),
 });
+
+export const loginSchema = z.object({
+  email: z.string().trim().pipe(z.email("Please enter a valid email address.")),
+
+  password: z.string().min(1, "Password is required"),
+
+  role: z.enum(["student", "recruiter"], {
+    error: (issue) =>
+      issue.input === undefined
+        ? "Please select a role"
+        : "Invalid role. Select student or recruiter",
+  }),
+});
