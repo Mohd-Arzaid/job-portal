@@ -122,3 +122,36 @@ export const getAllJobs = async (req, res) => {
     });
   }
 };
+
+export const getJobById = async (req, res) => {
+  try {
+    // 1. URL se job ki ID nikaalo
+    const { id } = req.params;
+
+    // 2. Database mein us ID ki job search karo
+    const job = await Job.findById(id)
+      .populate("company", "name logo location")
+      .lean();
+
+    // 3. Agar job nahi mili
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+    // 4. Job mil gayi toh response bhejo
+    return res.status(200).json({
+      success: true,
+      message: "Job fetched successfully",
+      data: job,
+    });
+  } catch (error) {
+    console.error("Get job by ID error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
