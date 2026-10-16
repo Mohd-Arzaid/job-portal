@@ -177,3 +177,82 @@ export const getApplicants = async (req, res) => {
     });
   }
 };
+
+export const updateApplicationStatus = async (req, res) => {
+  try {
+    // 1. Check karo ki user recruiter hai
+    if (req.user.role !== "recruiter") {
+      return res.status(403).json({
+        success: false,
+        message: "Only recruiters can update application status",
+      });
+    }
+    // 2. URL se Application ID nikaalo
+    const { applicationId } = req.params;
+
+    // 3. Application ID ka format validate karo
+    if (!mongoose.isValidObjectId(applicationId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid application ID",
+      });
+    }
+
+    // 4. Request body se naya status lo
+    const { status } = req.body;
+
+    // 5. Sirf Accepted aur Rejected allow karo
+    if (!["Accepted", "Rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be Accepted or Rejected",
+      });
+    }
+
+    // 6. Application database se find karo
+    const application = await Application.findById(applicationId);
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    // 7. Application ki job find karo
+    const job = await Job.findById(application.job);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    // 8. Verify karo ki job isi recruiter ki hai
+    if (job.createdBy.toString() !== req.user.userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to update this application",
+      });
+    }
+
+    // 9. Application ka status update karo
+    application.status = status;
+    await application.save();
+
+    // 10. Updated application return karo
+    return res.status(200).json({
+      success: true,
+      message: "Application status updated successfully",
+      data: application,
+    });
+  } catch (error) {
+    console.error("Update application status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
