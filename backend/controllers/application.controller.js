@@ -69,3 +69,47 @@ export const applyForJob = async (req, res) => {
     });
   }
 };
+
+export const getAppliedJobs = async (req, res) => {
+  try {
+    // 1. Sirf student apni applications dekh sake
+    if (req.user.role !== "student") {
+      return res.status(403).json({
+        success: false,
+        message: "Only students can view their applications",
+      });
+    }
+
+    // 2. Logged-in student ki ID
+    const applicantId = req.user.userId;
+
+    // 3. Student ki saari applications database se lao
+    const applications = await Application.find({
+      applicant: applicantId,
+    })
+      .populate({
+        path: "job", // Job ki ID ki jagah us Job ka actual data laao
+        populate: {
+          path: "company",
+          select: "name logo location",
+        },
+      })
+      .sort({ createdAt: -1 }) // descending order, new data phele aayega
+      .lean();
+
+    // 4. Response bhejo
+    return res.status(200).json({
+      success: true,
+      message: "Applied jobs fetched successfully",
+      count: applications.length,
+      data: applications,
+    });
+  } catch (error) {
+    console.error("Get applied jobs error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
