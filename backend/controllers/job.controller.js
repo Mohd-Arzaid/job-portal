@@ -155,3 +155,38 @@ export const getJobById = async (req, res) => {
     });
   }
 };
+
+export const getRecruiterJobs = async (req, res) => {
+  try {
+    // 1. Check karo ki user recruiter hai
+    if (req.user.role !== "recruiter") {
+      return res.status(403).json({
+        success: false,
+        message: "Only recruiters can access their jobs",
+      });
+    }
+
+    // 2. Logged-in recruiter ki ID
+    const userId = req.user.userId;
+
+    // 3. Uski saari jobs fetch karo
+    const jobs = await Job.find({ createdBy: userId })
+      .populate("company", "name logo location")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 4. Response bhejo
+    return res.status(200).json({
+      success: true,
+      message: "Recruiter jobs fetched successfully",
+      data: jobs,
+    });
+  } catch (error) {
+    console.error("Get recruiter jobs error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
