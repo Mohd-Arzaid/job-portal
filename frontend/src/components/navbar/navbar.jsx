@@ -52,12 +52,12 @@ export default function Navbar() {
         <Link
           href="/"
           onClick={closeMenus}
-          className="flex shrink-0 items-center text-center text-2xl font-bold tracking-tight text-neutral-950"
+          className="inline-flex shrink-0 items-center gap-1 text-center text-2xl font-bold tracking-tight text-neutral-950"
         >
-          Job
+          <span>Job</span>
           <span className="text-neutral-500">Portal</span>
         </Link>
-
+        
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => {
