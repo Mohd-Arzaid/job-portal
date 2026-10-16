@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const applicationSchema = new mongoose.schema(
+const applicationSchema = new mongoose.Schema(
   {
     // Kis student ne apply kiya
     applicant: {
