@@ -1,7 +1,7 @@
 import axios from "axios";
-import { endpoints } from "./api";
+import { authEndpoints } from "./api";
 
-const { REGISTER_API, LOGIN_API } = endpoints;
+const { REGISTER_API, LOGIN_API } = authEndpoints;
 
 export const registerUser = async (formData) => {
   const response = await axios.post(REGISTER_API, formData);
@@ -24,6 +24,13 @@ export const loginUser = async (data) => {
   const response = await axios.post(LOGIN_API, data, {
     withCredentials: true, // JWT cookie backend se receive karne ke liye
   });
+
+  console.log("LOGIN API RESPONSE............", response);
+
+  console.log(
+    "LOGIN API SUCCESS RESPONSE............",
+    response.data.success,
+  );
 
   if (!response.data.success) {
     throw new Error(response.data.message || "Login failed");
