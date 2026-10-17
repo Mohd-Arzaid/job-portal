@@ -219,7 +219,7 @@ export default function Navbar() {
                       type="button"
                       disabled={isLoggingOut}
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isLoggingOut ? (
                         <LoaderCircle size={17} className="animate-spin" />
