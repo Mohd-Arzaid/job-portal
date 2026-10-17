@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import {
   Menu,
   X,
@@ -10,23 +10,47 @@ import {
   LogOut,
   ChevronDown,
   BriefcaseBusiness,
-  Building2,
+  LoaderCircle,
 } from "lucide-react";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
 
-  const [user, setUser] = useState(null);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Reference for the complete profile dropdown area
+  const profileRef = useRef(null);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, []);
 
   const isRecruiter = user?.role === "recruiter";
+  const fullName = user?.fullName || user?.fullname || "User";
+  const profilePhoto = user?.profile?.profilePhoto;
 
   const navLinks = isRecruiter
-    ? [
-        { href: "/admin/companies", label: "Companies" },
-        { href: "/admin/jobs", label: "Manage Jobs" },
-      ]
+    ? [{ href: "/recruiter/dashboard", label: "Dashboard" }]
     : [
         { href: "/", label: "Home" },
         { href: "/jobs", label: "Find Jobs" },
@@ -38,45 +62,56 @@ export default function Navbar() {
       ? pathname === "/"
       : pathname === href || pathname.startsWith(`${href}/`);
 
-  const closeMobileMenu = () => setIsMenuOpen(false);
-
   const closeMenus = () => {
     setIsMenuOpen(false);
     setIsProfileOpen(false);
   };
 
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+      closeMenus();
+      router.replace("/login");
+    } catch {
+      // The auth store displays the logout error.
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-neutral-100 bg-white/95 backdrop-blur-md">
-      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-neutral-200/70 bg-white/90 backdrop-blur-xl">
+      <nav className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           href="/"
           onClick={closeMenus}
-          className="inline-flex shrink-0 items-center gap-1 text-center text-2xl font-bold tracking-tight text-neutral-950"
+          className="flex shrink-0 items-center gap-1 text-2xl font-bold tracking-tight text-neutral-950"
         >
-          <span>Job</span>
-          <span className="text-neutral-500">Portal</span>
+          Job<span className="text-neutral-400">Portal</span>
+          <span className="ml-1.5 size-1.5 rounded-full bg-neutral-900" />
         </Link>
-        
-        {/* Desktop Navigation */}
-        <div className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => {
-            const active = isActive(link.href);
 
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-neutral-100 text-neutral-950"
-                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+        {/* Desktop Navigation */}
+        <div className="hidden items-center gap-1 rounded-full border border-neutral-200/80 bg-neutral-50/80 p-1 md:flex">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={closeMenus}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                isActive(link.href)
+                  ? "bg-neutral-900 text-white shadow-sm"
+                  : "text-neutral-600 hover:bg-white hover:text-neutral-950"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
         {/* Right Side */}
@@ -85,93 +120,114 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                onClick={closeMobileMenu}
-                className="hidden h-9 items-center rounded-md px-3 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 sm:inline-flex"
+                onClick={closeMenus}
+                className="hidden rounded-full px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 sm:inline-flex"
               >
-                Login
+                Log in
               </Link>
 
               <Link
                 href="/register"
-                onClick={closeMobileMenu}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-neutral-900 px-4 text-sm font-medium text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[0.98]"
+                onClick={closeMenus}
+                className="inline-flex h-10 items-center justify-center rounded-full bg-neutral-900 px-5 text-sm font-semibold text-white transition hover:bg-neutral-700 active:scale-[0.98]"
               >
-                Register
+                Get started
               </Link>
             </>
           ) : (
-            <div className="relative">
+            <div ref={profileRef} className="relative">
+              {/* Profile Button: Circular Image + Name */}
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((open) => !open)}
                 aria-expanded={isProfileOpen}
                 aria-label="Open profile menu"
-                className="flex items-center gap-2 rounded-lg border border-neutral-200 p-1.5 pr-3 transition-colors hover:bg-neutral-100"
+                className={`flex items-center gap-2.5 rounded-full border p-1.5 pr-3 transition-all duration-200 ${
+                  isProfileOpen
+                    ? "border-neutral-300 bg-neutral-50"
+                    : "border-transparent hover:border-neutral-200 hover:bg-neutral-50"
+                }`}
               >
-                <div className="flex size-8 items-center justify-center rounded-md bg-neutral-100 text-sm font-semibold text-neutral-800">
-                  {user.fullName?.charAt(0)?.toUpperCase() || "U"}
-                </div>
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt={fullName}
+                    className="size-9 shrink-0 rounded-full border border-neutral-200 object-cover"
+                  />
+                ) : (
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
+                    {fullName.charAt(0).toUpperCase()}
+                  </div>
+                )}
 
-                <span className="hidden max-w-28 truncate text-sm font-medium text-neutral-800 sm:block">
-                  {user.fullName}
+                <span className="hidden max-w-28 truncate text-sm font-semibold text-neutral-800 sm:block">
+                  {fullName}
                 </span>
 
                 <ChevronDown
-                  size={16}
-                  className={`text-neutral-500 transition-transform ${
+                  size={15}
+                  className={`text-neutral-500 transition-transform duration-200 ${
                     isProfileOpen ? "rotate-180" : ""
                   }`}
                 />
               </button>
 
+              {/* Profile Dropdown */}
               {isProfileOpen && (
-                <div className="absolute right-0 top-12 w-64 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg shadow-black/5">
+                <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[280px] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl shadow-neutral-900/[0.08]">
+                  {/* User Image + Name Only */}
                   <div className="border-b border-neutral-100 px-4 py-4">
-                    <p className="truncate text-sm font-semibold text-neutral-900">
-                      {user.fullName}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      {profilePhoto ? (
+                        <img
+                          src={profilePhoto}
+                          alt={fullName}
+                          className="size-11 shrink-0 rounded-full border border-neutral-200 object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
+                          {fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
 
-                    <p className="mt-1 text-xs capitalize text-neutral-500">
-                      {user.role}
-                    </p>
+                      <p className="truncate text-sm font-semibold text-neutral-950">
+                        {fullName}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="p-2">
                     {isRecruiter ? (
-                      <>
-                        <DropdownLink
-                          href="/admin/companies"
-                          icon={<Building2 size={17} />}
-                          label="My Company"
-                          onClick={() => setIsProfileOpen(false)}
-                        />
-
-                        <DropdownLink
-                          href="/admin/jobs"
-                          icon={<BriefcaseBusiness size={17} />}
-                          label="Manage Jobs"
-                          onClick={() => setIsProfileOpen(false)}
-                        />
-                      </>
+                      <DropdownLink
+                        href="/recruiter/dashboard"
+                        icon={<BriefcaseBusiness size={17} />}
+                        label="Dashboard"
+                        onClick={closeMenus}
+                      />
                     ) : (
                       <DropdownLink
                         href="/profile"
                         icon={<UserRound size={17} />}
                         label="My Profile"
-                        onClick={() => setIsProfileOpen(false)}
+                        onClick={closeMenus}
                       />
                     )}
 
+                    <div className="my-2 border-t border-neutral-100" />
+
                     <button
                       type="button"
-                      onClick={() => {
-                        setUser(null);
-                        setIsProfileOpen(false);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
+                      disabled={isLoggingOut}
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <LogOut size={17} />
-                      Logout
+                      {isLoggingOut ? (
+                        <LoaderCircle size={17} className="animate-spin" />
+                      ) : (
+                        <LogOut size={17} />
+                      )}
+
+                      {isLoggingOut ? "Logging out..." : "Log out"}
                     </button>
                   </div>
                 </div>
@@ -185,9 +241,9 @@ export default function Navbar() {
             onClick={() => setIsMenuOpen((open) => !open)}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={isMenuOpen}
-            className="inline-flex size-9 items-center justify-center rounded-md text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950 md:hidden"
+            className="inline-flex size-10 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 transition hover:bg-neutral-100 md:hidden"
           >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {isMenuOpen ? <X size={19} /> : <Menu size={19} />}
           </button>
         </div>
       </nav>
@@ -195,42 +251,87 @@ export default function Navbar() {
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <div className="border-t border-neutral-100 bg-white md:hidden">
-          <div className="mx-auto max-w-7xl space-y-1 px-4 py-3 sm:px-6">
-            {navLinks.map((link) => {
-              const active = isActive(link.href);
+          <div className="mx-auto max-w-7xl space-y-1 px-4 py-4 sm:px-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={closeMenus}
+                className={`block rounded-xl px-4 py-3 text-sm font-medium transition ${
+                  isActive(link.href)
+                    ? "bg-neutral-900 text-white"
+                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
 
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={closeMobileMenu}
-                  className={`block rounded-md px-3 py-3 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-neutral-100 text-neutral-950"
-                      : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-                  }`}
+            {user ? (
+              <div className="mt-3 border-t border-neutral-100 pt-3">
+                {/* Mobile User Image + Name Only */}
+                <div className="flex items-center gap-3 px-3 py-3">
+                  {profilePhoto ? (
+                    <img
+                      src={profilePhoto}
+                      alt={fullName}
+                      className="size-11 shrink-0 rounded-full border border-neutral-200 object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
+                      {fullName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+
+                  <p className="truncate text-sm font-semibold text-neutral-950">
+                    {fullName}
+                  </p>
+                </div>
+
+                <DropdownLink
+                  href={isRecruiter ? "/recruiter/dashboard" : "/profile"}
+                  icon={
+                    isRecruiter ? (
+                      <BriefcaseBusiness size={17} />
+                    ) : (
+                      <UserRound size={17} />
+                    )
+                  }
+                  label={isRecruiter ? "Dashboard" : "My Profile"}
+                  onClick={closeMenus}
+                />
+
+                <button
+                  type="button"
+                  disabled={isLoggingOut}
+                  onClick={handleLogout}
+                  className="mt-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60"
                 >
-                  {link.label}
-                </Link>
-              );
-            })}
+                  {isLoggingOut ? (
+                    <LoaderCircle size={17} className="animate-spin" />
+                  ) : (
+                    <LogOut size={17} />
+                  )}
 
-            {!user && (
+                  {isLoggingOut ? "Logging out..." : "Log out"}
+                </button>
+              </div>
+            ) : (
               <div className="grid grid-cols-2 gap-3 border-t border-neutral-100 pt-4">
                 <Link
                   href="/login"
-                  onClick={closeMobileMenu}
-                  className="flex h-10 items-center justify-center rounded-lg border border-neutral-200 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100"
+                  onClick={closeMenus}
+                  className="flex h-11 items-center justify-center rounded-full border border-neutral-200 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
                 >
-                  Login
+                  Log in
                 </Link>
 
                 <Link
                   href="/register"
-                  onClick={closeMobileMenu}
-                  className="flex h-10 items-center justify-center rounded-lg bg-neutral-900 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
+                  onClick={closeMenus}
+                  className="flex h-11 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white transition hover:bg-neutral-700"
                 >
-                  Register
+                  Get started
                 </Link>
               </div>
             )}
@@ -246,7 +347,7 @@ function DropdownLink({ href, icon, label, onClick }) {
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
+      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
     >
       {icon}
       {label}
