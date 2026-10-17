@@ -13,9 +13,11 @@ import { loginUser } from "@/api-services/auth.service";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import RedirectIfAuthenticated from "@/routes/auth/redirect-if-authenticated";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function LoginPage() {
   const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
 
   const {
     register,
@@ -39,6 +41,9 @@ export default function LoginPage() {
       const response = await loginUser(data);
 
       toast.success(response.message || "Logged in successfully!");
+
+      // Update Zustand auth store so user state is available immediately
+      setUser(response.data);
 
       // Backend se validated role lo, form data se nahi
       const userRole = response.data.role;
