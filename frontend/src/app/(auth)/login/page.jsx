@@ -8,8 +8,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { BriefcaseBusiness, GraduationCap } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { loginUser } from "@/api-services/auth.service";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -27,9 +33,32 @@ export default function LoginPage() {
 
   const selectedRole = watch("role");
 
-  // UI only: no API integration yet.
   const handleLogin = async (data) => {
-    console.log("Login form data:", data);
+    try {
+      const response = await loginUser(data);
+
+      toast.success(response.message || "Logged in successfully!");
+
+      // Backend se validated role lo, form data se nahi
+      const userRole = response.data.role;
+
+      if (userRole === "recruiter") {
+        router.push("/recruiter/dashboard");
+      } else if (userRole === "student") {
+        router.push("/");
+      } else {
+        toast.error("Invalid account role.");
+      }
+    } catch (error) {
+      console.error("LOGIN API ERROR............", error.response?.data || error.message);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Something went wrong. Please try again.";
+
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -95,22 +124,22 @@ export default function LoginPage() {
                   onClick={() =>
                     setValue("role", "student", {
                       shouldValidate: true,
-                      shouldDirty: true,
                     })
                   }
-                  aria-pressed={selectedRole === "student"}
-                  className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors",
                     selectedRole === "student"
                       ? "border-neutral-900 bg-neutral-50"
-                      : "border-neutral-200 hover:border-neutral-400"
-                  }`}
+                      : "border-neutral-200 hover:border-neutral-400",
+                  )}
                 >
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-lg",
                       selectedRole === "student"
                         ? "bg-neutral-900 text-white"
-                        : "bg-neutral-100 text-neutral-600"
-                    }`}
+                        : "bg-neutral-100 text-neutral-600",
+                    )}
                   >
                     <GraduationCap size={19} />
                   </div>
@@ -129,22 +158,22 @@ export default function LoginPage() {
                   onClick={() =>
                     setValue("role", "recruiter", {
                       shouldValidate: true,
-                      shouldDirty: true,
                     })
                   }
-                  aria-pressed={selectedRole === "recruiter"}
-                  className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors",
                     selectedRole === "recruiter"
                       ? "border-neutral-900 bg-neutral-50"
-                      : "border-neutral-200 hover:border-neutral-400"
-                  }`}
+                      : "border-neutral-200 hover:border-neutral-400",
+                  )}
                 >
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-lg",
                       selectedRole === "recruiter"
                         ? "bg-neutral-900 text-white"
-                        : "bg-neutral-100 text-neutral-600"
-                    }`}
+                        : "bg-neutral-100 text-neutral-600",
+                    )}
                   >
                     <BriefcaseBusiness size={19} />
                   </div>
@@ -169,30 +198,11 @@ export default function LoginPage() {
             <Button type="submit" fullWidth disabled={isSubmitting}>
               {isSubmitting ? "Logging in..." : "Log In"}
             </Button>
-
-            {/* Terms */}
-            <p className="text-center text-sm leading-6 text-neutral-500">
-              By logging in, you agree to our{" "}
-              <Link
-                href="/terms"
-                className="font-medium text-neutral-900 underline underline-offset-4 transition-colors hover:text-neutral-600"
-              >
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy"
-                className="font-medium text-neutral-900 underline underline-offset-4 transition-colors hover:text-neutral-600"
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
           </form>
 
           {/* Register Link */}
-          <p className="mt-7 text-center text-sm text-neutral-600">
-            Don't have an account?{" "}
+          <p className="mt-5 text-center text-sm text-neutral-600">
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="font-semibold text-neutral-950 underline underline-offset-4 transition-colors hover:text-neutral-600"
