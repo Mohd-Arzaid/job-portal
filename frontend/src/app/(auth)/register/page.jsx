@@ -1,24 +1,30 @@
 "use client";
 
-import FrontendLayout from "@/components/layouts/frontend-layout";
-import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import { SignUpSchema } from "@/schemas/auth.schema";
-import Link from "next/link";
+import { cn } from "@/lib/utils";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { ImagePlus, UserRound, BriefcaseBusiness } from "lucide-react";
+import Button from "@/components/ui/button";
+import Link from "next/link";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SignUpSchema } from "@/schemas/auth.schema";
+import { registerUser } from "@/api-services/auth.service";
+import FrontendLayout from "@/components/layouts/frontend-layout";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function RegisterPage() {
-  const [profilePreview, setProfilePreview] = useState("");
+  const router = useRouter();
+  const [selectedProfileImageURL, setSelectedProfileImageURL] = useState("");
+  const [profileImageFile, setProfileImageFile] = useState(null);
 
   const {
     register,
-    handleSubmit,
     watch,
+    handleSubmit,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm({
     resolver: zodResolver(SignUpSchema),
     defaultValues: {
@@ -30,24 +36,60 @@ export default function RegisterPage() {
     },
   });
 
+  // watch() -> Jab form field ki value ke according UI change karni ho
   const selectedRole = watch("role");
 
-  // UI only: no API integration yet.
-  const handleSignup = async (data) => {
-    console.log("Signup form data:", data);
+  const handleRegister = async (data) => {
+    const formData = new FormData();
+    formData.append("fullName", data.fullName);
+    formData.append("email", data.email);
+    formData.append("phoneNumber", data.phoneNumber);
+    formData.append("password", data.password);
+    formData.append("role", data.role);
+
+    if (profileImageFile) {
+      formData.append("file", profileImageFile);
+    }
+
+    console.log("REGISTER FORM DATA -");
+
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value instanceof File ? value.name : value); // instanceof File -> true -> then // Print file name instead of the entire File object
+    }
+
+    try {
+      // REGISTER API CALL
+      const response = await registerUser(formData);
+
+      toast.success(response.message || "Account created successfully!");
+
+      router.push("/login");
+    } catch (error) {
+      console.error(
+        "REGISTER API ERROR............",
+        error.response?.data || error.message,
+      );
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Something went wrong. Please try again.";
+
+      toast.error(errorMessage);
+    }
   };
 
-  const handleProfileChange = (event) => {
+  const handleProfileImageChange = (event) => {
     const file = event.target.files?.[0];
-
     if (!file) return;
 
-    setProfilePreview(URL.createObjectURL(file));
+    setProfileImageFile(file);
+    setSelectedProfileImageURL(URL.createObjectURL(file));
   };
 
   return (
     <FrontendLayout>
-      <section className="flex min-h-[75vh] items-center justify-center py-10 sm:py-14">
+      <section className="flex items-center justify-center py-10 sm:py-12">
         <div className="w-full max-w-lg">
           {/* Header */}
           <div className="mb-8 text-center">
@@ -62,25 +104,23 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form
-            onSubmit={handleSubmit(handleSignup)}
-            className="space-y-5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-black/[0.02] sm:p-8"
+            onSubmit={handleSubmit(handleRegister)}
+            className="space-y-5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-black/2 sm:p-8"
           >
             {/* Full Name */}
             <Input
               label="Full Name"
               type="text"
               placeholder="Enter your full name"
-              autoComplete="name"
               {...register("fullName")}
               error={errors.fullName?.message}
             />
 
-            {/* Email */}
+            {/* Email Address */}
             <Input
               label="Email Address"
               type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
+              placeholder="Enter your email address"
               {...register("email")}
               error={errors.email?.message}
             />
@@ -90,7 +130,6 @@ export default function RegisterPage() {
               label="Phone Number"
               type="tel"
               placeholder="Enter your phone number"
-              autoComplete="tel"
               {...register("phoneNumber")}
               error={errors.phoneNumber?.message}
             />
@@ -100,7 +139,6 @@ export default function RegisterPage() {
               label="Password"
               type="password"
               placeholder="Create a strong password"
-              autoComplete="new-password"
               {...register("password")}
               error={errors.password?.message}
             />
@@ -115,29 +153,28 @@ export default function RegisterPage() {
                 {/* Student */}
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
                     setValue("role", "student", {
                       shouldValidate: true,
-                      shouldDirty: true,
-                    })
-                  }
-                  aria-pressed={selectedRole === "student"}
-                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                    });
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl border p-4 text-left transition-colors",
                     selectedRole === "student"
                       ? "border-neutral-900 bg-neutral-50"
-                      : "border-neutral-200 hover:border-neutral-400"
-                  }`}
+                      : "border-neutral-200 hover:border-neutral-400",
+                  )}
                 >
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-lg",
                       selectedRole === "student"
                         ? "bg-neutral-900 text-white"
-                        : "bg-neutral-100 text-neutral-600"
-                    }`}
+                        : "bg-neutral-100 text-neutral-600",
+                    )}
                   >
                     <UserRound size={19} />
                   </div>
-
                   <div>
                     <p className="text-sm font-semibold text-neutral-900">
                       Student
@@ -145,29 +182,28 @@ export default function RegisterPage() {
                     <p className="mt-1 text-xs text-neutral-500">Find a job</p>
                   </div>
                 </button>
-
                 {/* Recruiter */}
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
                     setValue("role", "recruiter", {
                       shouldValidate: true,
-                      shouldDirty: true,
-                    })
-                  }
-                  aria-pressed={selectedRole === "recruiter"}
-                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                    });
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl border p-4 text-left transition-colors",
                     selectedRole === "recruiter"
                       ? "border-neutral-900 bg-neutral-50"
-                      : "border-neutral-200 hover:border-neutral-400"
-                  }`}
+                      : "border-neutral-200 hover:border-neutral-400",
+                  )}
                 >
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                    className={cn(
+                      "flex size-10 shrink-0 items-center justify-center rounded-lg",
                       selectedRole === "recruiter"
                         ? "bg-neutral-900 text-white"
-                        : "bg-neutral-100 text-neutral-600"
-                    }`}
+                        : "bg-neutral-100 text-neutral-600",
+                    )}
                   >
                     <BriefcaseBusiness size={19} />
                   </div>
@@ -199,10 +235,10 @@ export default function RegisterPage() {
 
               <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-neutral-300 p-4 transition-colors hover:border-neutral-500 hover:bg-neutral-50">
                 <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100">
-                  {profilePreview ? (
+                  {selectedProfileImageURL ? (
                     <img
-                      src={profilePreview}
-                      alt="Profile preview"
+                      src={selectedProfileImageURL}
+                      alt="Profile Preview"
                       className="size-full object-cover"
                     />
                   ) : (
@@ -221,39 +257,21 @@ export default function RegisterPage() {
 
                 <input
                   type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handleProfileChange}
+                  accept="image/*" // sabhi image types, jaise PNG, JPG, WEBP
+                  className="sr-only" // Input ko visually hide karne ke liye
+                  onChange={handleProfileImageChange}
                 />
               </label>
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Creating account..." : "Create Account"}
             </Button>
-
-            <p className="text-center text-sm leading-6 text-neutral-500">
-              By creating an account, you agree to our{" "}
-              <Link
-                href="/terms"
-                className="font-medium text-neutral-900 underline underline-offset-4 hover:text-neutral-600"
-              >
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy"
-                className="font-medium text-neutral-900 underline underline-offset-4 hover:text-neutral-600"
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
           </form>
 
           {/* Login Link */}
-          <p className="mt-7 text-center text-sm text-neutral-600">
+          <p className="mt-5 text-center text-sm text-neutral-600">
             Already have an account?{" "}
             <Link
               href="/login"

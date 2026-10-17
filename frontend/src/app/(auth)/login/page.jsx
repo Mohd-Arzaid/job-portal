@@ -34,7 +34,7 @@ export default function LoginPage() {
 
   return (
     <FrontendLayout>
-      <section className="flex min-h-[75vh] w-full items-center justify-center px-4 py-10 sm:px-6 sm:py-14">
+      <section className="flex w-full items-center justify-center py-10 sm:py-12">
         <div className="w-full max-w-lg">
           {/* Header */}
           <div className="mb-8 text-center">
@@ -50,13 +50,13 @@ export default function LoginPage() {
           {/* Login Form */}
           <form
             onSubmit={handleSubmit(handleLogin)}
-            className="space-y-5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-black/[0.02] sm:p-8"
+            className="space-y-5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm shadow-black/2 sm:p-8"
           >
             {/* Email */}
             <Input
               label="Email Address"
               type="email"
-              placeholder="you@example.com"
+              placeholder="Enter your email address"
               autoComplete="email"
               {...register("email")}
               error={errors.email?.message}
