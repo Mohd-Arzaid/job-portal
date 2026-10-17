@@ -1,86 +1,180 @@
+
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import FrontendLayout from "@/components/layouts/frontend-layout";
 import ProtectedRoute from "@/routes/auth/protected-route";
 import { useAuthStore } from "@/store/auth.store";
-import { Mail, Phone, ShieldCheck, User } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  ShieldCheck,
+  UserRound,
+  LogOut,
+  LoaderCircle,
+  ArrowRight,
+} from "lucide-react";
 
 export default function ProfilePage() {
+  const router = useRouter();
+
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+      router.replace("/login");
+    } catch {
+      // Stay on the profile page if logout fails.
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={["student", "recruiter"]}>
       <FrontendLayout>
-        <main className="mx-auto max-w-4xl py-10">
-          <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
-              {user?.profile?.profilePhoto ? (
-                <img
-                  src={user.profile.profilePhoto}
-                  alt={user.fullName}
-                  className="size-24 rounded-full border border-neutral-200 object-cover shadow-sm"
-                />
-              ) : (
-                <div className="flex size-24 items-center justify-center rounded-full bg-neutral-900 text-3xl font-bold text-white shadow-sm">
-                  {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
-                </div>
-              )}
+        <main className="min-h-[calc(100vh-5rem)] bg-white px-4 py-10 sm:px-6 sm:py-14">
+          <div className="mx-auto max-w-4xl">
+            {/* Page Header */}
+            <div className="mb-8">
+              <p className="text-sm font-medium text-neutral-500">
+                Account Settings
+              </p>
 
-              <div className="text-center sm:text-left">
-                <h1 className="text-2xl font-bold text-neutral-900">
-                  {user?.fullName || "User Name"}
-                </h1>
-                <p className="mt-1 text-sm text-neutral-500">{user?.email}</p>
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium capitalize text-neutral-800">
-                  <ShieldCheck size={14} />
-                  Role: {user?.role}
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
+                My Profile
+              </h1>
+
+              <p className="mt-3 max-w-xl text-sm leading-6 text-neutral-500 sm:text-base">
+                Manage your personal information and account details.
+              </p>
+            </div>
+
+            {/* Profile Card */}
+            <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+              {/* Profile Header */}
+              <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8">
+                <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-50">
+                  {user?.profile?.profilePhoto ? (
+                    <img
+                      src={user.profile.profilePhoto}
+                      alt={user.fullName || "Profile photo"}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-semibold text-neutral-700">
+                      {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+                    </span>
+                  )}
                 </div>
+
+                <div className="min-w-0 flex-1">
+                  <h2 className="break-words text-xl font-semibold tracking-tight text-neutral-950 sm:text-2xl">
+                    {user?.fullName || "User Name"}
+                  </h2>
+
+                  <p className="mt-1 break-all text-sm text-neutral-500">
+                    {user?.email || "No email available"}
+                  </p>
+
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium capitalize text-neutral-700">
+                    <ShieldCheck size={14} />
+                    {user?.role || "User"} Account
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {isLoggingOut ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    <LogOut size={16} />
+                  )}
+
+                  {isLoggingOut ? "Logging out..." : "Log out"}
+                </button>
               </div>
-            </div>
 
-            <div className="mt-8 border-t border-neutral-100 pt-6">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-                Personal Information
-              </h2>
+              <div className="border-t border-neutral-200" />
 
-              <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
-                  <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
-                    <User size={14} /> Full Name
-                  </dt>
-                  <dd className="mt-1 text-sm font-medium text-neutral-900">
-                    {user?.fullName || "N/A"}
-                  </dd>
+              {/* Personal Information */}
+              <div className="p-6 sm:p-8">
+                <div className="mb-6">
+                  <h3 className="text-base font-semibold text-neutral-950">
+                    Personal Information
+                  </h3>
+
+                  <p className="mt-1 text-sm text-neutral-500">
+                    Your registered account details.
+                  </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
-                  <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
-                    <Mail size={14} /> Email Address
-                  </dt>
-                  <dd className="mt-1 text-sm font-medium text-neutral-900">
-                    {user?.email || "N/A"}
-                  </dd>
-                </div>
+                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* Full Name */}
+                  <div className="rounded-xl border border-neutral-200 p-4 transition-colors duration-200 hover:border-neutral-300">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
+                      <UserRound size={15} />
+                      Full Name
+                    </dt>
 
-                <div className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
-                  <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
-                    <Phone size={14} /> Phone Number
-                  </dt>
-                  <dd className="mt-1 text-sm font-medium text-neutral-900">
-                    {user?.phoneNumber || "N/A"}
-                  </dd>
-                </div>
+                    <dd className="mt-3 break-words text-sm font-medium text-neutral-900">
+                      {user?.fullName || "N/A"}
+                    </dd>
+                  </div>
 
-                <div className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
-                  <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
-                    <ShieldCheck size={14} /> Account Role
-                  </dt>
-                  <dd className="mt-1 text-sm font-medium capitalize text-neutral-900">
-                    {user?.role || "N/A"}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+                  {/* Email */}
+                  <div className="rounded-xl border border-neutral-200 p-4 transition-colors duration-200 hover:border-neutral-300">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
+                      <Mail size={15} />
+                      Email Address
+                    </dt>
+
+                    <dd className="mt-3 break-all text-sm font-medium text-neutral-900">
+                      {user?.email || "N/A"}
+                    </dd>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="rounded-xl border border-neutral-200 p-4 transition-colors duration-200 hover:border-neutral-300">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
+                      <Phone size={15} />
+                      Phone Number
+                    </dt>
+
+                    <dd className="mt-3 text-sm font-medium text-neutral-900">
+                      {user?.phoneNumber || "N/A"}
+                    </dd>
+                  </div>
+
+                  {/* Account Role */}
+                  <div className="rounded-xl border border-neutral-200 p-4 transition-colors duration-200 hover:border-neutral-300">
+                    <dt className="flex items-center gap-2 text-xs font-medium text-neutral-500">
+                      <ShieldCheck size={15} />
+                      Account Role
+                    </dt>
+
+                    <dd className="mt-3 text-sm font-medium capitalize text-neutral-900">
+                      {user?.role || "N/A"}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+
+        
           </div>
         </main>
       </FrontendLayout>

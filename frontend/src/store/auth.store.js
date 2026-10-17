@@ -19,10 +19,13 @@ export const useAuthStore = create((set) => ({
       // Set current user details
       set({ user: response.data });
     } catch (error) {
-      console.error(
-        "GET PROFILE API ERROR............",
-        error.response?.data || error.message,
-      );
+      if (error.response?.status !== 401) {
+        console.error(
+          "GET PROFILE API ERROR............",
+          error.response?.data || error.message,
+        );
+      }
+
       set({ user: null });
     } finally {
       set({ isLoading: false });
