@@ -10,11 +10,11 @@ export const registerUser = async (formData) => {
 
   console.log(
     "REGISTER API SUCCESS RESPONSE............",
-    response.data.success,
+    response?.data?.success,
   );
 
-  if (!response.data.success) {
-    throw new Error(response.data.message || "Registration failed");
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.message || "Registration failed");
   }
 
   return response.data;
@@ -27,10 +27,10 @@ export const loginUser = async (data) => {
 
   console.log("LOGIN API RESPONSE............", response);
 
-  console.log("LOGIN API SUCCESS RESPONSE............", response.data.success);
+  console.log("LOGIN API SUCCESS RESPONSE............", response?.data?.success);
 
-  if (!response.data.success) {
-    throw new Error(response.data.message || "Login failed");
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.message || "Login failed");
   }
 
   return response.data;
@@ -47,10 +47,10 @@ export const logoutUser = async () => {
 
   console.log("LOGOUT API RESPONSE............", response);
 
-  console.log("LOGOUT API SUCCESS RESPONSE............", response.data.success);
+  console.log("LOGOUT API SUCCESS RESPONSE............", response?.data?.success);
 
-  if (!response.data.success) {
-    throw new Error(response.data.message || "Logout failed");
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.message || "Logout failed");
   }
 
   return response.data;

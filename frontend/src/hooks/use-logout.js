@@ -27,6 +27,9 @@ export default function useLogout() {
     try {
       await logout();
       router.replace("/login");
+    } catch {
+      // Error is already logged and displayed via toast in authStore.logout
+      // Caught here to prevent unhandled promise rejection in click event handlers
     } finally {
       setIsLoggingOut(false);
     }

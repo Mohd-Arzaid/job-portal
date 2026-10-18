@@ -12,11 +12,11 @@ export const getProfile = async () => {
 
   console.log(
     "GET PROFILE API SUCCESS RESPONSE............",
-    response.data.success,
+    response?.data?.success,
   );
 
-  if (!response.data.success) {
-    throw new Error(response.data.message || "Failed to fetch profile");
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.message || "Failed to fetch profile");
   }
 
   return response.data;

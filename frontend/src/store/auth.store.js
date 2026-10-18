@@ -17,7 +17,7 @@ export const useAuthStore = create((set) => ({
       const response = await getProfile();
 
       // Set current user details
-      set({ user: response.data });
+      set({ user: response?.data || null });
     } catch (error) {
       if (error.response?.status !== 401) {
         console.error(
@@ -41,7 +41,9 @@ export const useAuthStore = create((set) => ({
       set({ user: null });
 
       // Show a success message
-      toast.success(response.message || "Logged out successfully!");
+      toast.success(response?.message || "Logged out successfully!");
+
+      return response;
     } catch (error) {
       console.error(
         "LOGOUT API ERROR............",

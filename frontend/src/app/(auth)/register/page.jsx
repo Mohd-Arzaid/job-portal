@@ -62,7 +62,7 @@ export default function RegisterPage() {
       // REGISTER API CALL
       const response = await registerUser(formData);
 
-      toast.success(response.message || "Account created successfully!");
+      toast.success(response?.message || "Account created successfully!");
 
       router.push("/login");
     } catch (error) {
@@ -72,6 +72,7 @@ export default function RegisterPage() {
       );
 
       const errorMessage =
+        error.response?.data?.errors?.[0] ||
         error.response?.data?.message ||
         error.message ||
         "Something went wrong. Please try again.";

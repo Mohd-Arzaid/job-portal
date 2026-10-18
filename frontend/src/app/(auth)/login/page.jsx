@@ -40,13 +40,15 @@ export default function LoginPage() {
     try {
       const response = await loginUser(data);
 
-      toast.success(response.message || "Logged in successfully!");
+      toast.success(response?.message || "Logged in successfully!");
 
       // Update Zustand auth store so user state is available immediately
-      setUser(response.data);
+      if (response?.data) {
+        setUser(response.data);
+      }
 
       // Backend se validated role lo, form data se nahi
-      const userRole = response.data.role;
+      const userRole = response?.data?.role;
 
       if (userRole === "recruiter") {
         router.push("/recruiter/dashboard");
@@ -62,6 +64,7 @@ export default function LoginPage() {
       );
 
       const errorMessage =
+        error.response?.data?.errors?.[0] ||
         error.response?.data?.message ||
         error.message ||
         "Something went wrong. Please try again.";

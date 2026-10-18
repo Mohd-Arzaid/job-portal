@@ -48,7 +48,7 @@ export default function Navbar() {
     setIsProfileOpen(false);
   };
 
-  const { handleLogout, isLoggingOut } = useLogout({ onSuccess: closeMenus });
+  const { handleLogout, isLoggingOut } = useLogout();
 
   const isRecruiter = user?.role === "recruiter";
   const fullName = user?.fullName || user?.fullname || "User";
