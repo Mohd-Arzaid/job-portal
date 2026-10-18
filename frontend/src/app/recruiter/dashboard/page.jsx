@@ -1,32 +1,13 @@
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/routes/auth/protected-route";
-import { useAuthStore } from "@/store/auth.store";
+import Button from "@/components/ui/button";
+import useLogout from "@/hooks/use-logout";
 import { BriefcaseBusiness, LogOut, LoaderCircle } from "lucide-react";
 
 export default function RecruiterDashboardPage() {
-  const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
-
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-
-    setIsLoggingOut(true);
-
-    try {
-      await logout();
-      router.replace("/login");
-    } catch {
-      // Stay on the dashboard if logout fails.
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+  const { handleLogout, isLoggingOut } = useLogout();
 
   return (
     <ProtectedRoute allowedRoles={["recruiter"]}>
@@ -50,20 +31,19 @@ export default function RecruiterDashboardPage() {
             </div>
 
             {/* Logout Button */}
-            <button
-              type="button"
+            <Button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition-colors duration-200 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+              leftIcon={
+                isLoggingOut ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : (
+                  <LogOut size={16} />
+                )
+              }
             >
-              {isLoggingOut ? (
-                <LoaderCircle size={16} className="animate-spin" />
-              ) : (
-                <LogOut size={16} />
-              )}
-
               {isLoggingOut ? "Logging out..." : "Log out"}
-            </button>
+            </Button>
           </header>
 
           {/* Dashboard Content */}

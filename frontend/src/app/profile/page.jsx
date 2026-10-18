@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import FrontendLayout from "@/components/layouts/frontend-layout";
 import ProtectedRoute from "@/routes/auth/protected-route";
+import Button from "@/components/ui/button";
+import useLogout from "@/hooks/use-logout";
 import { useAuthStore } from "@/store/auth.store";
 import {
   Mail,
@@ -13,31 +13,11 @@ import {
   UserRound,
   LogOut,
   LoaderCircle,
-  ArrowRight,
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const router = useRouter();
-
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
-
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-
-    setIsLoggingOut(true);
-
-    try {
-      await logout();
-      router.replace("/login");
-    } catch {
-      // Stay on the profile page if logout fails.
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+  const { handleLogout, isLoggingOut } = useLogout();
 
   return (
     <ProtectedRoute allowedRoles={["student", "recruiter"]}>
@@ -92,20 +72,20 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
+                <Button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  className="w-full sm:w-auto"
+                  leftIcon={
+                    isLoggingOut ? (
+                      <LoaderCircle size={16} className="animate-spin" />
+                    ) : (
+                      <LogOut size={16} />
+                    )
+                  }
                 >
-                  {isLoggingOut ? (
-                    <LoaderCircle size={16} className="animate-spin" />
-                  ) : (
-                    <LogOut size={16} />
-                  )}
-
                   {isLoggingOut ? "Logging out..." : "Log out"}
-                </button>
+                </Button>
               </div>
 
               <div className="border-t border-neutral-200" />

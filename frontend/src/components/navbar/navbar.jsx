@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   Menu,
@@ -13,17 +13,15 @@ import {
   LoaderCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
+import useLogout from "@/hooks/use-logout";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Reference for the complete profile dropdown area
   const profileRef = useRef(null);
@@ -45,6 +43,13 @@ export default function Navbar() {
     };
   }, []);
 
+  const closeMenus = () => {
+    setIsMenuOpen(false);
+    setIsProfileOpen(false);
+  };
+
+  const { handleLogout, isLoggingOut } = useLogout({ onSuccess: closeMenus });
+
   const isRecruiter = user?.role === "recruiter";
   const fullName = user?.fullName || user?.fullname || "User";
   const profilePhoto = user?.profile?.profilePhoto;
@@ -61,27 +66,6 @@ export default function Navbar() {
     href === "/"
       ? pathname === "/"
       : pathname === href || pathname.startsWith(`${href}/`);
-
-  const closeMenus = () => {
-    setIsMenuOpen(false);
-    setIsProfileOpen(false);
-  };
-
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-
-    setIsLoggingOut(true);
-
-    try {
-      await logout();
-      closeMenus();
-      router.replace("/login");
-    } catch {
-      // The auth store displays the logout error.
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-neutral-200/70 bg-white/90 backdrop-blur-xl">
