@@ -1,10 +1,10 @@
 import axios from "axios";
 import { jobEndpoints } from "./api";
 
-const { GET_ALL_JOBS_API } = jobEndpoints;
+const { GET_ALL_JOBS_API, GET_JOB_BY_ID_API } = jobEndpoints;
 
 // Fetch all Jobs with optional query params (Keyword, Page, Limit)
-export const getAllJobs = async () => {
+export const getAllJobs = async (params = {}) => {
   const response = await axios.get(GET_ALL_JOBS_API, {
     params,
     withCredentials: true,
