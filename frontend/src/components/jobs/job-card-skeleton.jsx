@@ -14,7 +14,7 @@ export default function JobCardSkeleton({ className }) {
           <div className="flex items-center gap-3.5">
             <div className="size-12 rounded-xl bg-neutral-100" />
             <div className="space-y-2">
-              <div className="h-4 w-28 rounded bg-neutral-200" />
+              <div className="h-4 w-28 rounded bg-neutral-100" />
               <div className="h-3 w-20 rounded bg-neutral-100" />
             </div>
           </div>
@@ -23,7 +23,7 @@ export default function JobCardSkeleton({ className }) {
 
         {/* Title and Description */}
         <div className="mt-4 space-y-2">
-          <div className="h-5 w-3/4 rounded bg-neutral-200" />
+          <div className="h-5 w-3/4 rounded bg-neutral-100" />
           <div className="h-3.5 w-full rounded bg-neutral-100" />
           <div className="h-3.5 w-2/3 rounded bg-neutral-100" />
         </div>
@@ -46,7 +46,7 @@ export default function JobCardSkeleton({ className }) {
       {/* Footer */}
       <div className="mt-6 flex items-center justify-between border-t border-neutral-100 pt-4">
         <div className="h-4 w-20 rounded bg-neutral-100" />
-        <div className="h-9 w-24 rounded-xl bg-neutral-200" />
+        <div className="h-9 w-24 rounded-xl bg-neutral-100" />
       </div>
     </div>
   );

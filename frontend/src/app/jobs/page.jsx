@@ -1,12 +1,16 @@
 "use client";
 
-import { DUMMY_JOBS } from "@/components/jobs/dummy-jobs";
+// import { DUMMY_JOBS } from "@/components/jobs/dummy-jobs";
 import FilterOptions from "@/components/jobs/filter-options";
 import JobCard from "@/components/jobs/job-card";
+import JobCardSkeleton from "@/components/jobs/job-card-skeleton";
 import FrontendLayout from "@/components/layouts/frontend-layout";
+import useJobs from "@/hooks/use-jobs";
 import {
+  AlertCircle,
   Briefcase,
   ChevronDown,
+  RefreshCw,
   Search,
   SlidersHorizontal,
   X,
@@ -16,6 +20,13 @@ import React, { Suspense, useMemo, useState } from "react";
 
 function JobsContent() {
   // State Management
+
+  // Params object ko stable rakhne ke liye useMemo use kar rahe h taaki har re-render par iska naya reference na bane
+  // Example: Agar component re-render hota hai aur params ki value{ limit: 100 } hi hai, toh useMemo same object reference return karega
+  // Isse fetchAllJobs unnecessarily recreate nahi hoga aur useEffect baar-baar run hokar unnecessary API calls nahi karega
+  // Empty dependency array [] ka matlab hai ki is object ko component ke renders ke beech dobara create nahi karna hai
+  const params = useMemo(() => ({ limit: 100 }), []);
+  const { jobs, isLoading, error, fetchAllJobs } = useJobs(params);
 
   // 1. SEARCH STATE
   // Previous page se search karke aane par
@@ -127,91 +138,104 @@ function JobsContent() {
   // It stores the array returned after applying the filter and sort logic
 
   const filteredJobs = useMemo(() => {
-    return DUMMY_JOBS.filter((job) => {
-      // 1. Keyword Search
-      // purpose -> job ke title , description , company name , requirements mai searchQuery ko find krna hai
+    if (!jobs || !Array.isArray(jobs)) return [];
 
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
+    // return DUMMY_JOBS.filter((job) => {
+    return jobs
+      .filter((job) => {
+        // 1. Keyword Search
+        // purpose -> job ke title , description , company name , requirements mai searchQuery ko find krna hai
 
-        const matchesTitle = job.title?.toLowerCase().includes(query);
-        const matchesDesc = job.description?.toLowerCase().includes(query);
-        const matchesCompany = job.company?.name?.toLowerCase().includes(query);
-        const matchesRequirements = job.requirements?.some((req) =>
-          req.toLowerCase().includes(query),
-        );
+        if (searchQuery.trim()) {
+          const query = searchQuery.toLowerCase().trim();
 
-        // agar keyword title, description , company name aur requirements - in chaaro mai kahi ni mila , toh current object ko reject krna hai
-
-        if (
-          !matchesTitle &&
-          !matchesDesc &&
-          !matchesCompany &&
-          !matchesRequirements
-        ) {
-          return false; // remove job becoz keyword match ni hua
-        }
-      }
-
-      // 2. Job Type Filter
-      if (
-        selectedJobTypes.length > 0 &&
-        !selectedJobTypes.includes(job.jobType)
-      ) {
-        return false; // Selected job type match nahi hua
-      }
-
-      // 3. Location Filter
-      if (selectedLocations.length > 0) {
-        const matchesLoc = selectedLocations.some((loc) => {
-          return (
-            job.location?.toLowerCase().includes(loc.toLowerCase()) ||
-            job.company?.location?.toLowerCase().includes(loc.toLowerCase())
+          const matchesTitle = job.title?.toLowerCase().includes(query);
+          const matchesDesc = job.description?.toLowerCase().includes(query);
+          const matchesCompany = job.company?.name
+            ?.toLowerCase()
+            .includes(query);
+          const matchesRequirements = job.requirements?.some((req) =>
+            req.toLowerCase().includes(query),
           );
-        });
 
-        if (!matchesLoc) return false;
-      }
+          // agar keyword title, description , company name aur requirements - in chaaro mai kahi ni mila , toh current object ko reject krna hai
 
-      // 4. Experience Level Filter
-      if (selectedExperience) {
-        const exp = job.experienceLevel;
-        if (selectedExperience === "0" && exp !== 0) return false;
-        if (selectedExperience === "1-2" && (exp < 1 || exp > 2)) return false;
-        if (selectedExperience === "3-4" && (exp < 3 || exp > 4)) return false;
-        if (selectedExperience === "5+" && exp < 5) return false;
-      }
+          if (
+            !matchesTitle &&
+            !matchesDesc &&
+            !matchesCompany &&
+            !matchesRequirements
+          ) {
+            return false; // remove job becoz keyword match ni hua
+          }
+        }
 
-      // 5. Salary Range Filter
-      if (selectedSalary) {
-        const sal = job.salary;
-        if (selectedSalary === "0-6" && sal > 6) return false;
-        if (selectedSalary === "6-15" && (sal < 6 || sal > 15)) return false;
-        if (selectedSalary === "15-25" && (sal < 15 || sal > 25)) return false;
-        if (selectedSalary === "25+" && sal < 25) return false;
-      }
+        // 2. Job Type Filter
+        if (
+          selectedJobTypes.length > 0 &&
+          !selectedJobTypes.includes(job.jobType)
+        ) {
+          return false; // Selected job type match nahi hua
+        }
 
-      return true;
-    }).sort((a, b) => {
-      // Sorting
-      // b - a → highest to lowest
-      // a - b → lowest to highest
+        // 3. Location Filter
+        if (selectedLocations.length > 0) {
+          const matchesLoc = selectedLocations.some((loc) => {
+            return (
+              job.location?.toLowerCase().includes(loc.toLowerCase()) ||
+              job.company?.location?.toLowerCase().includes(loc.toLowerCase())
+            );
+          });
 
-      if (sortBy === "salary-high") {
-        return (b.salary || 0) - (a.salary || 0);
-      }
+          if (!matchesLoc) return false;
+        }
 
-      if (sortBy === "salary-low") {
-        return (a.salary || 0) - (b.salary || 0);
-      }
+        // 4. Experience Level Filter
+        if (selectedExperience) {
+          const exp = job.experienceLevel;
+          if (selectedExperience === "0" && exp !== 0) return false;
+          if (selectedExperience === "1-2" && (exp < 1 || exp > 2))
+            return false;
+          if (selectedExperience === "3-4" && (exp < 3 || exp > 4))
+            return false;
+          if (selectedExperience === "5+" && exp < 5) return false;
+        }
 
-      if (sortBy === "experience") {
-        return (b.experienceLevel || 0) - (a.experienceLevel || 0);
-      }
+        // 5. Salary Range Filter
+        if (selectedSalary) {
+          const sal = job.salary;
+          if (selectedSalary === "0-6" && sal > 6) return false;
+          if (selectedSalary === "6-15" && (sal < 6 || sal > 15)) return false;
+          if (selectedSalary === "15-25" && (sal < 15 || sal > 25))
+            return false;
+          if (selectedSalary === "25+" && sal < 25) return false;
+        }
 
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+        return true;
+      })
+      .sort((a, b) => {
+        // Sorting
+        // b - a → highest to lowest
+        // a - b → lowest to highest
+
+        if (sortBy === "salary-high") {
+          return (b.salary || 0) - (a.salary || 0);
+        }
+
+        if (sortBy === "salary-low") {
+          return (a.salary || 0) - (b.salary || 0);
+        }
+
+        if (sortBy === "experience") {
+          return (b.experienceLevel || 0) - (a.experienceLevel || 0);
+        }
+
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
   }, [
+    jobs,
     searchQuery,
     selectedJobTypes,
     selectedLocations,
@@ -350,7 +374,7 @@ function JobsContent() {
                     onClick={() => setShowMobileFilters(false)}
                     className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 active:scale-[0.98]"
                   >
-                    View {filteredJobs.length} Jobs
+                    View {isLoading ? "..." : filteredJobs.length} Jobs
                   </button>
                 </div>
               </div>
@@ -362,13 +386,17 @@ function JobsContent() {
             {/* List Header : Counts + Active Filters + Sort */}
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-neutral-500">
-                  Showing{" "}
-                  <span className="font-semibold text-neutral-950">
-                    {filteredJobs.length}
-                  </span>{" "}
-                  {filteredJobs.length === 1 ? "job" : "jobs"} available
-                </p>
+                {isLoading ? (
+                  <div className="h-5 w-44 animate-pulse rounded-md bg-neutral-100" />
+                ) : (
+                  <p className="text-sm font-medium text-neutral-500">
+                    Showing{" "}
+                    <span className="font-semibold text-neutral-950">
+                      {filteredJobs.length}
+                    </span>{" "}
+                    {filteredJobs.length === 1 ? "job" : "jobs"} available
+                  </p>
+                )}
               </div>
 
               {/* Sort By Dropdown */}
@@ -491,7 +519,40 @@ function JobsContent() {
             )}
 
             {/* Jobs Cards Feed */}
-            {filteredJobs.length > 0 ? (
+
+            {isLoading ? (
+              // Loading Skel
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {[...Array(6)].map((_, idx) => (
+                  <JobCardSkeleton key={idx} />
+                ))}
+              </div>
+            ) : error && jobs.length === 0 ? (
+              // Error State With Retry Button
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-red-200 bg-red-50/40 py-16 px-4 text-center">
+                <div className="flex size-14 items-center justify-center rounded-2xl border border-red-200 bg-white text-red-500 shadow-xs">
+                  <AlertCircle size={24} />
+                </div>
+
+                <h3 className="mt-4 text-base font-semibold text-neutral-950">
+                  Failed to load jobs
+                </h3>
+
+                <p className="mt-1.5 max-w-sm text-sm text-neutral-600">
+                  {error}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => fetchAllJobs()}
+                  className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-5 py-2.5 text-xs font-medium text-white transition hover:bg-neutral-800 active:scale-[0.98] cursor-pointer"
+                >
+                  <RefreshCw size={13} />
+                  Retry
+                </button>
+              </div>
+            ) : filteredJobs.length > 0 ? (
+              // Real Backend Jobs Feed
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 {filteredJobs.map((job) => (
                   <JobCard key={job._id} job={job} />
