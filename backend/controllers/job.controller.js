@@ -63,8 +63,9 @@ export const getAllJobs = async (req, res) => {
 
     // 2. Get pagination details
     const page = Math.max(1, Number(req.query.page) || 1); //user kaunsa page dekhna chahta hai
-    const limit = 10; // ek page pai maximum 10 jobs dikhani hai
+    const limit = Math.max(1, Number(req.query.limit) || 10); // ek page pai maximum jobs dikhani hai (default: 10)
     const skip = (page - 1) * limit; // Ye calculate karta hai ki current page tak pahunchne ke liye kitni jobs chhodni hain
+
 
     // page  = kaunsa page chahiye
     // limit = ek page par kitni jobs chahiye

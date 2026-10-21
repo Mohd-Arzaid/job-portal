@@ -10,3 +10,9 @@ export const authEndpoints = {
 export const profileEndpoints = {
   PROFILE_API: BASE_URL + "/user/profile",
 };
+
+export const jobEndpoints = {
+  GET_ALL_JOBS_API: BASE_URL + "/job/all",
+  GET_JOB_BY_ID_API: BASE_URL + "/job",
+};
+
