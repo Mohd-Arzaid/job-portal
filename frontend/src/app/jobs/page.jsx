@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 // import { DUMMY_JOBS } from "@/components/jobs/dummy-jobs";
 import FilterOptions from "@/components/jobs/filter-options";
 import JobCard from "@/components/jobs/job-card";
@@ -293,7 +294,10 @@ function JobsContent() {
           <button
             type="button"
             onClick={() => setShowMobileFilters((prev) => !prev)}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50 lg:hidden"
+            className={cn(
+              "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50 lg:hidden cursor-pointer",
+              hasActiveFilters && "border-neutral-900 bg-neutral-50 text-neutral-950",
+            )}
           >
             <SlidersHorizontal size={16} />
             Filters

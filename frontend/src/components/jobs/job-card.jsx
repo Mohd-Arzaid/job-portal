@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 import {
   MapPin,
@@ -27,7 +28,7 @@ function getTimeAgo(dateString) {
   return `${diffInMonths} mo ago`;
 }
 
-export default function JobCard({ job }) {
+export default function JobCard({ job, className }) {
   const [isSaved, setIsSaved] = useState(false);
 
   if (!job) return null;
@@ -57,7 +58,12 @@ export default function JobCard({ job }) {
   };
 
   return (
-    <article className="group relative flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 transition-all duration-200 hover:border-neutral-300 hover:shadow-lg hover:shadow-black/4">
+    <article
+      className={cn(
+        "group relative flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 transition-all duration-200 hover:border-neutral-300 hover:shadow-lg hover:shadow-black/4",
+        className,
+      )}
+    >
       {/* Top Header: Logo + Info + Bookmark */}
       <div>
         <div className="flex items-start justify-between gap-4">
@@ -94,11 +100,14 @@ export default function JobCard({ job }) {
             type="button"
             onClick={toggleSave}
             aria-label={isSaved ? "Remove from bookmarks" : "Save job"}
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 active:scale-95"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 active:scale-95 cursor-pointer"
           >
             <Bookmark
               size={16}
-              className={isSaved ? "fill-neutral-900 text-neutral-900" : ""}
+              className={cn(
+                "transition-colors",
+                isSaved && "fill-neutral-900 text-neutral-900",
+              )}
             />
           </button>
         </div>

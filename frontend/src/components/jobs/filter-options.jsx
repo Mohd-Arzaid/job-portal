@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Check, RotateCcw } from "lucide-react";
 
 const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Contract"];
@@ -45,7 +46,10 @@ export default function FilterOptions({
 }) {
   return (
     <aside
-      className={`rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}
+      className={cn(
+        "rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6",
+        className,
+      )}
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
@@ -87,11 +91,12 @@ export default function FilterOptions({
                   </span>
 
                   <div
-                    className={`flex size-4 items-center justify-center rounded border transition-colors ${
+                    className={cn(
+                      "flex size-4 items-center justify-center rounded border transition-colors",
                       isChecked
                         ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-300 bg-white group-hover:border-neutral-400"
-                    }`}
+                        : "border-neutral-300 bg-white group-hover:border-neutral-400",
+                    )}
                   >
                     {isChecked && <Check size={12} strokeWidth={3} />}
                   </div>
@@ -131,11 +136,12 @@ export default function FilterOptions({
                   </span>
 
                   <div
-                    className={`flex size-4 items-center justify-center rounded border transition-colors ${
+                    className={cn(
+                      "flex size-4 items-center justify-center rounded border transition-colors",
                       isChecked
                         ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-300 bg-white group-hover:border-neutral-400"
-                    }`}
+                        : "border-neutral-300 bg-white group-hover:border-neutral-400",
+                    )}
                   >
                     {isChecked && <Check size={12} strokeWidth={3} />}
                   </div>
@@ -168,11 +174,12 @@ export default function FilterOptions({
                   key={experience.value}
                   type="button"
                   onClick={() => onSelectExperience?.(experience.value)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 cursor-pointer",
                     isSelected
                       ? "border-neutral-900 bg-neutral-900 text-white shadow-sm"
-                      : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-950"
-                  }`}
+                      : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-950",
+                  )}
                 >
                   {experience.label}
                 </button>
@@ -198,11 +205,12 @@ export default function FilterOptions({
                   key={salary.range}
                   type="button"
                   onClick={() => onSelectSalary?.(salary.range)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 cursor-pointer",
                     isSelected
                       ? "border-neutral-900 bg-neutral-900 text-white shadow-sm"
-                      : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-950"
-                  }`}
+                      : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-950",
+                  )}
                 >
                   {salary.label}
                 </button>
