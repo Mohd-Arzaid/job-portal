@@ -1,4 +1,3 @@
-
 "use client";
 
 import FrontendLayout from "@/components/layouts/frontend-layout";
@@ -14,6 +13,7 @@ import {
   LogOut,
   LoaderCircle,
 } from "lucide-react";
+import AppliedJobsTable from "@/components/profile/applied-jobs-table";
 
 export default function ProfilePage() {
   const user = useAuthStore((state) => state.user);
@@ -154,7 +154,8 @@ export default function ProfilePage() {
               </div>
             </section>
 
-        
+            {/* Applied Jobs Section (Sirf student ke liye render karenge) */}
+            {user?.role === "student" && <AppliedJobsTable />}
           </div>
         </main>
       </FrontendLayout>
