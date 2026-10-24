@@ -16,3 +16,8 @@ export const jobEndpoints = {
   GET_JOB_BY_ID_API: BASE_URL + "/job",
 };
 
+export const applicationEndpoints = {
+  APPLY_JOB_API: BASE_URL + "/application",
+  GET_APPLIED_JOBS_API: BASE_URL + "/application/applied-jobs",
+};
+
