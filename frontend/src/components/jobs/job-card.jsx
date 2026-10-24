@@ -58,12 +58,12 @@ export default function JobCard({ job, className }) {
           <div className="flex items-start justify-between gap-4">
             {/* Company Details */}
             <div className="flex items-center gap-3.5">
-              <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 p-1">
+              <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-white p-1">
                 {companyLogo ? (
                   <img
                     src={companyLogo}
                     alt={companyName}
-                    className="size-full rounded-lg object-cover"
+                    className="size-full rounded-lg object-contain"
                   />
                 ) : (
                   <span className="text-base font-semibold text-neutral-800">

@@ -205,12 +205,12 @@ export default function JobDetailsPage() {
               {/* Left: Logo + Title + Meta */}
               <div className="flex items-start gap-5">
                 {/* Company Logo */}
-                <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 p-1.5">
+                <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-white p-2">
                   {companyLogo ? (
                     <img
                       src={companyLogo}
                       alt={companyName}
-                      className="size-full rounded-xl object-cover"
+                      className="size-full object-contain"
                     />
                   ) : (
                     <span className="text-xl font-bold text-neutral-700">
