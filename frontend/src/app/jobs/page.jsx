@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { Suspense, useMemo, useState } from "react";
+import useJobPaginatin from "@/hooks/use-job-pagination";
+import Pagination from "@/components/jobs/pagination";
+import useJobPagination from "@/hooks/use-job-pagination";
 
 function JobsContent() {
   // State Management
@@ -245,6 +248,25 @@ function JobsContent() {
     sortBy,
   ]);
 
+  // Pagination Logic Handled through useJobPagination Custom Hook
+  const {
+    currentPage,
+    totalPages,
+    totalJobs,
+    limit,
+    paginatedJobs,
+    handlePageChange,
+  } = useJobPagination({
+    filteredJobs,
+    limit: 6,
+    searchQuery,
+    selectedJobTypes,
+    selectedLocations,
+    selectedExperience,
+    selectedSalary,
+    sortBy,
+  });
+
   return (
     <FrontendLayout>
       <div className="py-8 sm:py-12">
@@ -296,7 +318,8 @@ function JobsContent() {
             onClick={() => setShowMobileFilters((prev) => !prev)}
             className={cn(
               "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50 lg:hidden cursor-pointer",
-              hasActiveFilters && "border-neutral-900 bg-neutral-50 text-neutral-950",
+              hasActiveFilters &&
+                "border-neutral-900 bg-neutral-50 text-neutral-950",
             )}
           >
             <SlidersHorizontal size={16} />
@@ -378,7 +401,7 @@ function JobsContent() {
                     onClick={() => setShowMobileFilters(false)}
                     className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 active:scale-[0.98]"
                   >
-                    View {isLoading ? "..." : filteredJobs.length} Jobs
+                    View {isLoading ? "..." : totalJobs} Jobs
                   </button>
                 </div>
               </div>
@@ -395,10 +418,12 @@ function JobsContent() {
                 ) : (
                   <p className="text-sm font-medium text-neutral-500">
                     Showing{" "}
-                    <span className="font-semibold text-neutral-950">
-                      {filteredJobs.length}
+                    <span className="font-medium text-neutral-900">
+                      {totalJobs}
                     </span>{" "}
-                    {filteredJobs.length === 1 ? "job" : "jobs"} available
+                    available {totalJobs === 1 ? "job" : "jobs"}
+                    {totalPages > 1 &&
+                      ` · Page ${currentPage} of ${totalPages}`}
                   </p>
                 )}
               </div>
@@ -555,13 +580,25 @@ function JobsContent() {
                   Retry
                 </button>
               </div>
-            ) : filteredJobs.length > 0 ? (
-              // Real Backend Jobs Feed
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                {filteredJobs.map((job) => (
-                  <JobCard key={job._id} job={job} />
-                ))}
-              </div>
+            ) : paginatedJobs.length > 0 ? (
+              <>
+                {/* Real Backend Jobs Feed */}
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  {paginatedJobs.map((job) => (
+                    <JobCard key={job._id} job={job} />
+                  ))}
+                </div>
+
+                {/* Pagination Navigation */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalJobs={totalJobs}
+                  limit={limit}
+                  onPageChange={handlePageChange}
+                  isLoading={isLoading}
+                />
+              </>
             ) : (
               /* Empty State */
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-white py-16 px-4 text-center">
