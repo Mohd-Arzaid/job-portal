@@ -43,8 +43,8 @@ export default function JobDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Apply logic: loading, hasApplied, handleApply - use-apply-job custom hook se
-  const { isApplying, hasApplied, handleApply } = useApplyJob();
+  // Apply logic: loading, hasApplied, handleApply - use-apply-job custom hook se (jobId pass karke)
+  const { isApplying, hasApplied, handleApply } = useApplyJob(jobId);
 
   // Fetch Job Details
   const fetchJob = useCallback(async () => {
@@ -340,7 +340,7 @@ export default function JobDetailsPage() {
               <p className="text-base font-semibold text-neutral-950">
                 {selectedJob?.position
                   ? selectedJob?.position +
-                  (selectedJob?.position > 1 ? " Positions" : " Position")
+                    (selectedJob?.position > 1 ? " Positions" : " Position")
                   : "Not disclosed"}
               </p>
             </div>
