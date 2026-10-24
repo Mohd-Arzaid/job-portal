@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { Suspense, useMemo, useState } from "react";
-import useJobPaginatin from "@/hooks/use-job-pagination";
 import Pagination from "@/components/jobs/pagination";
 import useJobPagination from "@/hooks/use-job-pagination";
 
