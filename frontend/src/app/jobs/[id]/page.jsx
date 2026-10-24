@@ -205,12 +205,12 @@ export default function JobDetailsPage() {
               {/* Left: Logo + Title + Meta */}
               <div className="flex items-start gap-5">
                 {/* Company Logo */}
-                <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-white p-2">
+                <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-white p-1">
                   {companyLogo ? (
                     <img
                       src={companyLogo}
                       alt={companyName}
-                      className="size-full object-contain"
+                      className="size-full rounded-lg object-contain"
                     />
                   ) : (
                     <span className="text-xl font-bold text-neutral-700">
@@ -340,7 +340,7 @@ export default function JobDetailsPage() {
               <p className="text-base font-semibold text-neutral-950">
                 {selectedJob?.position
                   ? selectedJob?.position +
-                    (selectedJob?.position > 1 ? " Positions" : " Position")
+                  (selectedJob?.position > 1 ? " Positions" : " Position")
                   : "Not disclosed"}
               </p>
             </div>
