@@ -38,7 +38,9 @@ export const registerCompany = async (req, res) => {
 
     // 5. Get uploaded company logo file and upload to Cloudinary
     const file = req.file;
-    const logoUrl = file ? await uploadToCloudinary(file) : "";
+    const logoUrl = file
+      ? await uploadToCloudinary(file, "job-portal/company-logos")
+      : "";
 
     // 6. Create company in database
     const company = await Company.create({

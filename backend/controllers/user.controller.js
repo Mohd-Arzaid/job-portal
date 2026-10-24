@@ -30,7 +30,9 @@ export const register = async (req, res) => {
 
     // 3. Get the uploaded file from Multer middleware and upload profile photo to Cloudinary
     const file = req.file;
-    const profilePhotoUrl = file ? await uploadToCloudinary(file) : "";
+    const profilePhotoUrl = file
+      ? await uploadToCloudinary(file, "job-portal/profiles")
+      : "";
 
     // 4. Hash the password before saving it
     const hashedPassword = await bcrypt.hash(password, 12);
