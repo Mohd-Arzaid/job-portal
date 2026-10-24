@@ -26,30 +26,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import useApplyJob from "@/hooks/use-apply-job";
 import toast from "react-hot-toast";
-
-// Helper: Human-readable time ago (e.g. "3 days ago", "1 mo ago")
-function getTimeAgo(dateString) {
-  if (!dateString) return "Recently";
-  const now = new Date();
-  const past = new Date(dateString);
-  const diffInMs = now.getTime() - past.getTime();
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-  if (diffInDays <= 0) return "Today";
-  if (diffInDays === 1) return "1 day ago";
-  if (diffInDays < 30) return diffInDays + " days ago";
-  const diffInMonths = Math.floor(diffInDays / 30);
-  return diffInMonths + " mo ago";
-}
-
-// Helper: Formatted full date (e.g. "24 Oct 2026")
-function formatDate(dateString) {
-  if (!dateString) return "Not disclosed";
-  return new Date(dateString).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { getTimeAgo, formatDate } from "@/utils/date.utils";
 
 export default function JobDetailsPage() {
   const router = useRouter();

@@ -13,21 +13,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
-
-// Helper to compute human-readable time ago.
-function getTimeAgo(dateString) {
-  if (!dateString) return "Recently";
-  const now = new Date();
-  const past = new Date(dateString);
-  const diffInMs = now.getTime() - past.getTime();
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-  if (diffInDays <= 0) return "Today";
-  if (diffInDays === 1) return "1 day ago";
-  if (diffInDays < 30) return `${diffInDays} days ago`;
-  const diffInMonths = Math.floor(diffInDays / 30);
-  return `${diffInMonths} mo ago`;
-}
+import { getTimeAgo } from "@/utils/date.utils";
 
 export default function JobCard({ job, className }) {
   const [isSaved, setIsSaved] = useState(false);
