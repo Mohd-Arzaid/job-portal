@@ -126,6 +126,76 @@ export default function JobDetailsPage() {
           Back to Jobs
         </Link>
 
+        {/* Loading State — Skeleton */}
+        {isLoading && (
+          <div className="mt-6 animate-pulse space-y-4">
+            <div className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-5">
+                  <div className="size-16 shrink-0 rounded-2xl bg-neutral-100" />
+                  <div className="space-y-3">
+                    <div className="h-7 w-56 rounded-lg bg-neutral-100" />
+                    <div className="h-4 w-36 rounded bg-neutral-100" />
+                    <div className="h-4 w-28 rounded bg-neutral-100" />
+                    <div className="flex gap-2">
+                      <div className="h-6 w-20 rounded-full bg-neutral-100" />
+                      <div className="h-6 w-24 rounded-full bg-neutral-100" />
+                    </div>
+                  </div>
+                </div>
+                <div className="h-11 w-36 shrink-0 rounded-xl bg-neutral-100" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl border border-neutral-100 bg-white p-4">
+                <div className="mb-2 h-3 w-16 rounded bg-neutral-100" />
+                <div className="h-5 w-20 rounded bg-neutral-100" />
+              </div>
+              <div className="rounded-xl border border-neutral-100 bg-white p-4">
+                <div className="mb-2 h-3 w-16 rounded bg-neutral-100" />
+                <div className="h-5 w-20 rounded bg-neutral-100" />
+              </div>
+              <div className="rounded-xl border border-neutral-100 bg-white p-4">
+                <div className="mb-2 h-3 w-16 rounded bg-neutral-100" />
+                <div className="h-5 w-20 rounded bg-neutral-100" />
+              </div>
+              <div className="rounded-xl border border-neutral-100 bg-white p-4">
+                <div className="mb-2 h-3 w-16 rounded bg-neutral-100" />
+                <div className="h-5 w-20 rounded bg-neutral-100" />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8 space-y-2.5">
+              <div className="mb-4 h-5 w-32 rounded bg-neutral-100" />
+              <div className="h-3.5 w-full rounded bg-neutral-100" />
+              <div className="h-3.5 w-5/6 rounded bg-neutral-100" />
+              <div className="h-3.5 w-4/5 rounded bg-neutral-100" />
+              <div className="h-3.5 w-full rounded bg-neutral-100" />
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {!isLoading && error && !selectedJob && (
+          <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-dashed border-red-200 bg-red-50/40 px-4 py-16 text-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl border border-red-200 bg-white text-red-500 shadow-xs">
+              <AlertCircle size={24} />
+            </div>
+            <h2 className="mt-4 text-base font-semibold text-neutral-950">
+              Failed to load job details
+            </h2>
+            <p className="mt-1.5 max-w-sm text-sm text-neutral-600">{error}</p>
+            {/* Retry button — is page ka fetchJob directly call karta hai */}
+            <button
+              type="button"
+              onClick={fetchJob}
+              className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-5 py-2.5 text-xs font-medium text-white transition hover:bg-neutral-800 active:scale-[0.98] cursor-pointer"
+            >
+              <RefreshCw size={13} />
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Main Job Details */}
         <div className="mt-6 space-y-4">
           {/* Hero Card: Company Logo + Job Title + Apply Button */}
