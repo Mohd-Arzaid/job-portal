@@ -24,6 +24,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import useApplyJob from "@/hooks/use-apply-job";
+import toast from "react-hot-toast";
 
 // Helper: Human-readable time ago (e.g. "3 days ago", "1 mo ago")
 function getTimeAgo(dateString) {
@@ -63,6 +65,9 @@ export default function JobDetailsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Apply logic: loading, hasApplied, handleApply - use-apply-job custom hook se
+  const { isApplying, hasApplied, handleApply } = useApplyJob();
 
   // Fetch Job Details
   const fetchJob = useCallback(async () => {
@@ -107,6 +112,25 @@ export default function JobDetailsPage() {
       clearSelectedJob();
     };
   }, [fetchJob, clearSelectedJob]);
+
+  // ─── Apply Button Click Handler ───
+  const handleApplyClick = () => {
+    // Agar user logged in nahi hai toh login page par bhejo
+    if (!user) {
+      toast.error("Please log in to apply for jobs.");
+      router.push("/login");
+      return;
+    }
+
+    // Sirf students hi apply kar sakte hain
+    if (user.role !== "student") {
+      toast.error("Only students can apply for jobs.");
+      return;
+    }
+
+    // Apply karo — useApplyJob hook mein toast aur state handle hoga
+    handleApply(jobId);
+  };
 
   // Derived data from selectedJob object
   const companyName = selectedJob?.company?.name || "Company";
@@ -263,12 +287,31 @@ export default function JobDetailsPage() {
                   <button
                     type="button"
                     id="apply-now-btn-top"
+                    onClick={handleApplyClick}
+                    disabled={isApplying || hasApplied}
                     className={cn(
-                      "cursor-pointer inline-flex h-11 items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 bg-neutral-900 text-white hover:bg-neutral-800",
+                      "cursor-pointer inline-flex h-11 items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70",
+                      hasApplied
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : "bg-neutral-900 text-white hover:bg-neutral-800",
                     )}
                   >
-                    Apply Now
-                    <ArrowUpRight size={16} />
+                    {isApplying ? (
+                      <>
+                        <LoaderCircle size={16} className="animate-spin" />
+                        Applying...
+                      </>
+                    ) : hasApplied ? (
+                      <>
+                        <CheckCircle2 size={16} />
+                        Applied
+                      </>
+                    ) : (
+                      <>
+                        Apply Now
+                        <ArrowUpRight size={16} />
+                      </>
+                    )}
                   </button>
                 )}
 
@@ -379,18 +422,34 @@ export default function JobDetailsPage() {
                   Apply now and take the next step in your career.
                 </p>
               </div>
-
               <button
                 type="button"
                 id="apply-now-btn-bottom"
+                onClick={handleApplyClick}
+                disabled={isApplying || hasApplied}
                 className={cn(
-                  "cursor-pointer inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 bg-neutral-900 text-white hover:bg-neutral-800",
+                  "cursor-pointer inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70",
+                  hasApplied
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-neutral-900 text-white hover:bg-neutral-800",
                 )}
               >
-                <>
-                  Apply Now
-                  <ArrowUpRight size={16} />
-                </>
+                {isApplying ? (
+                  <>
+                    <LoaderCircle size={16} className="animate-spin" />
+                    Applying...
+                  </>
+                ) : hasApplied ? (
+                  <>
+                    <CheckCircle2 size={16} />
+                    Applied
+                  </>
+                ) : (
+                  <>
+                    Apply Now
+                    <ArrowUpRight size={16} />
+                  </>
+                )}
               </button>
             </div>
           )}
