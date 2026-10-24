@@ -46,15 +46,15 @@ export default function JobCard({ job, className }) {
 
   return (
     // Job Card pai click krne pai /jobs/:id page par jayenge
-    <Link href={`/jobs/${_id}`}>
+    <Link href={`/jobs/${_id}`} className="group flex h-full w-full flex-col">
       <article
         className={cn(
-          "group relative flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 transition-all duration-200 hover:border-neutral-300 hover:shadow-lg hover:shadow-black/4",
+          "relative flex h-full w-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 transition-all duration-200 hover:border-neutral-300 hover:shadow-lg hover:shadow-black/4",
           className,
         )}
       >
         {/* Top Header: Logo + Info + Bookmark */}
-        <div>
+        <div className="flex flex-1 flex-col">
           <div className="flex items-start justify-between gap-4">
             {/* Company Details */}
             <div className="flex items-center gap-3.5">
@@ -100,19 +100,20 @@ export default function JobCard({ job, className }) {
               />
             </button>
           </div>
-          {/* Job Title */}
+
+          {/* Job Title & Description */}
           <div className="mt-4">
-            <h2 className="text-lg font-semibold tracking-tight text-neutral-950 transition-colors group-hover:text-neutral-700">
+            <h2 className="line-clamp-2 min-h-[3.25rem] text-lg font-semibold leading-snug tracking-tight text-neutral-950 transition-colors group-hover:text-neutral-700">
               {title}
             </h2>
 
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-neutral-600">
+            <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-neutral-600">
               {description}
             </p>
           </div>
 
-          {/* Job Details */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          {/* Job Details Badges */}
+          <div className="mt-4 flex min-h-[3.25rem] flex-wrap items-center content-start gap-1.5 sm:gap-2">
             {/* Job Type */}
             {jobType && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
@@ -144,24 +145,27 @@ export default function JobCard({ job, className }) {
               </span>
             )}
           </div>
+
           {/* Requirements / Skill Tags */}
-          {requirements.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-1.5">
-              {requirements.slice(0, 4).map((skill, index) => (
-                <span
-                  key={index}
-                  className="rounded-md border border-neutral-100 bg-neutral-100/60 px-2 py-0.5 text-[11px] font-medium text-neutral-600"
-                >
-                  {skill}
-                </span>
-              ))}
-              {requirements.length > 4 && (
-                <span className="text-[11px] font-medium text-neutral-400">
-                  +{requirements.length - 4} more
-                </span>
-              )}
-            </div>
-          )}
+          <div className="mt-3.5 flex min-h-[1.75rem] flex-wrap items-center content-start gap-1.5">
+            {requirements.length > 0 && (
+              <>
+                {requirements.slice(0, 4).map((skill, index) => (
+                  <span
+                    key={index}
+                    className="rounded-md border border-neutral-100 bg-neutral-100/60 px-2 py-0.5 text-[11px] font-medium text-neutral-600"
+                  >
+                    {skill}
+                  </span>
+                ))}
+                {requirements.length > 4 && (
+                  <span className="text-[11px] font-medium text-neutral-400">
+                    +{requirements.length - 4} more
+                  </span>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Card Footer: Date posted + Apply Button */}
@@ -174,7 +178,7 @@ export default function JobCard({ job, className }) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-neutral-900 px-4 text-xs font-medium text-white transition-all cursor-pointer  hover:bg-neutral-800 active:scale-[0.98]"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-neutral-900 px-4 text-xs font-medium text-white transition-all cursor-pointer hover:bg-neutral-800 active:scale-[0.98]"
             >
               Apply Now
               <ArrowUpRight size={14} />

@@ -4,11 +4,11 @@ export default function JobCardSkeleton({ className }) {
   return (
     <div
       className={cn(
-        "flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 animate-pulse",
+        "flex h-full w-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 animate-pulse",
         className,
       )}
     >
-      <div>
+      <div className="flex flex-1 flex-col">
         {/* Top Header: Logo + Info + Bookmark */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3.5">
@@ -29,14 +29,14 @@ export default function JobCardSkeleton({ className }) {
         </div>
 
         {/* Tags */}
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex min-h-[3.25rem] flex-wrap gap-2">
           <div className="h-6 w-20 rounded-full bg-neutral-100" />
           <div className="h-6 w-16 rounded-full bg-neutral-100" />
           <div className="h-6 w-24 rounded-full bg-neutral-100" />
         </div>
 
         {/* Requirements / Skill Tags */}
-        <div className="mt-4 flex gap-1.5">
+        <div className="mt-3.5 flex min-h-[1.75rem] gap-1.5">
           <div className="h-5 w-14 rounded bg-neutral-100" />
           <div className="h-5 w-16 rounded bg-neutral-100" />
           <div className="h-5 w-12 rounded bg-neutral-100" />
