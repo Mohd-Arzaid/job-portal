@@ -50,7 +50,9 @@ export default function useCreateJob() {
           : [],
         salary: Number(jobFormData.salary),
         experienceLevel: Number(jobFormData.experienceLevel),
-        location: jobFormData.location?.trim(),
+        location: Array.isArray(jobFormData.location)
+          ? jobFormData.location.map((item) => item.trim()).filter(Boolean)
+          : [],
         jobType: jobFormData.jobType,
         position: Number(jobFormData.position),
       };
