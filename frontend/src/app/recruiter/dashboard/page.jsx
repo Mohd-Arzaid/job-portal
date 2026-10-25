@@ -11,10 +11,12 @@ import {
 import Button from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
 import { useCompanyStore } from "@/store/company.store";
+import useRecruiterJobs from "@/hooks/use-recruiter-jobs";
 
 export default function RecruiterDashboardPage() {
   const user = useAuthStore((state) => state.user);
   const company = useCompanyStore((state) => state.company);
+  const { recruiterJobs, isLoading: isJobsLoading } = useRecruiterJobs();
 
   return (
     <div className="space-y-8">
@@ -51,8 +53,15 @@ export default function RecruiterDashboardPage() {
             </span>
             <BriefcaseBusiness size={18} />
           </div>
-          <p className="mt-3 text-3xl font-bold text-neutral-950">0</p>
-          <p className="mt-1 text-xs text-neutral-500">Currently published</p>
+          <p className="mt-3 text-3xl font-bold text-neutral-950">
+            {isJobsLoading ? "..." : recruiterJobs?.length || 0}
+          </p>
+          <Link
+            href="/recruiter/jobs"
+            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-neutral-600 hover:text-neutral-950"
+          >
+            View all postings <ArrowUpRight size={13} />
+          </Link>
         </div>
 
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs">

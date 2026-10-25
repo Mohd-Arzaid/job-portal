@@ -1,7 +1,12 @@
 import axios from "axios";
 import { jobEndpoints } from "./api";
 
-const { GET_ALL_JOBS_API, GET_JOB_BY_ID_API } = jobEndpoints;
+const {
+  GET_ALL_JOBS_API,
+  GET_JOB_BY_ID_API,
+  CREATE_JOB_API,
+  GET_RECRUITER_JOBS_API,
+} = jobEndpoints;
 
 // Fetch all Jobs with optional query params (Keyword, Page, Limit)
 export const getAllJobs = async (params = {}) => {
@@ -39,6 +44,46 @@ export const getJobById = async (id) => {
 
   if (!response?.data?.success) {
     throw new Error(response?.data?.message || "Failed to fetch job details");
+  }
+
+  return response.data;
+};
+
+// Create a new Job posting (Recruiter only)
+export const createJob = async (jobPayload) => {
+  const response = await axios.post(CREATE_JOB_API, jobPayload, {
+    withCredentials: true,
+  });
+
+  console.log("CREATE JOB API RESPONSE............", response);
+
+  console.log(
+    "CREATE JOB API SUCCESS RESPONSE............",
+    response?.data?.success,
+  );
+
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.message || "Failed to create job");
+  }
+
+  return response.data;
+};
+
+// Fetch all jobs posted by the logged-in recruiter
+export const getRecruiterJobs = async () => {
+  const response = await axios.get(GET_RECRUITER_JOBS_API, {
+    withCredentials: true,
+  });
+
+  console.log("GET RECRUITER JOBS API RESPONSE............", response);
+
+  console.log(
+    "GET RECRUITER JOBS API SUCCESS RESPONSE............",
+    response?.data?.success,
+  );
+
+  if (!response?.data?.success) {
+    throw new Error(response?.data?.message || "Failed to fetch recruiter jobs");
   }
 
   return response.data;

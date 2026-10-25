@@ -16,17 +16,16 @@ export const createJobSchema = z.object({
     .min(1, "Please add at least one requirement or skill."),
 
   salary: z.coerce
-    .number({
-      error: () => "Please enter a valid salary amount.",
-    })
-    .positive("Salary must be greater than 0."),
+    .number()
+    .refine((val) => !isNaN(val) && val > 0, {
+      message: "Salary must be greater than 0.",
+    }),
 
   experienceLevel: z.coerce
-    .number({
-      error: () => "Please enter years of experience.",
-    })
-    .int("Experience must be a whole number.")
-    .min(0, "Experience cannot be negative."),
+    .number()
+    .refine((val) => !isNaN(val) && Number.isInteger(val) && val >= 0, {
+      message: "Experience must be 0 or greater (in whole years).",
+    }),
 
   location: z
     .string()
@@ -34,16 +33,12 @@ export const createJobSchema = z.object({
     .min(2, "Location is required (e.g. Bengaluru, Remote)."),
 
   jobType: z.enum(["Full-time", "Part-time", "Internship", "Contract"], {
-    error: (issue) =>
-      issue.input === undefined
-        ? "Please select a job type."
-        : "Invalid job type. Select Full-time, Part-time, Internship, or Contract.",
+    message: "Please select a valid job type.",
   }),
 
   position: z.coerce
-    .number({
-      error: () => "Please enter number of open positions.",
-    })
-    .int("Position must be a whole number.")
-    .positive("Open positions must be at least 1."),
+    .number()
+    .refine((val) => !isNaN(val) && Number.isInteger(val) && val >= 1, {
+      message: "Open positions must be at least 1.",
+    }),
 });

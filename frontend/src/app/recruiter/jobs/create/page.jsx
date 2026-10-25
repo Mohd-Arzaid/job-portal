@@ -23,6 +23,7 @@ import Textarea from "@/components/ui/textarea";
 import Button from "@/components/ui/button";
 import { createJobSchema } from "@/schemas/job.schema";
 import { useCompanyStore } from "@/store/company.store";
+import useCreateJob from "@/hooks/use-create-job";
 import { cn } from "@/lib/utils";
 
 const JOB_TYPES = [
@@ -47,10 +48,15 @@ const SUGGESTED_REQUIREMENTS = [
   "Git",
 ];
 
+const MAX_REQUIREMENTS_COUNT = 15;
+
 export default function CreateJobPage() {
   const company = useCompanyStore((state) => state.company);
   const isCompanyLoading = useCompanyStore((state) => state.isLoading);
   const initializeCompany = useCompanyStore((state) => state.initializeCompany);
+
+  // Custom hook for posting job to backend API
+  const { handleCreateJob, isCreatingJob } = useCreateJob();
 
   // Requirements text input state
   const [requirementInput, setRequirementInput] = useState("");
@@ -82,6 +88,9 @@ export default function CreateJobPage() {
     },
   });
 
+  // Combined loading state
+  const isProcessing = isSubmitting || isCreatingJob;
+
   // watch() -> Jab field value ke according UI dynamically update karni ho
   const selectedJobType = watch("jobType");
   const selectedRequirements = watch("requirements") || [];
@@ -90,6 +99,12 @@ export default function CreateJobPage() {
   const handleAddRequirement = (requirementToAdd) => {
     const trimmedRequirement = (requirementToAdd || requirementInput).trim();
     if (!trimmedRequirement) return;
+
+    // Check maximum tags limit
+    if (selectedRequirements.length >= MAX_REQUIREMENTS_COUNT) {
+      toast.error(`Maximum ${MAX_REQUIREMENTS_COUNT} requirements allowed.`);
+      return;
+    }
 
     // Duplicate check (case-insensitive)
     if (
@@ -128,31 +143,9 @@ export default function CreateJobPage() {
     }
   };
 
-  // 3. Form submit handler (as requested: console logs the payload without making API call)
-  const handleCreateJob = async (data) => {
-    const formattedJobPayload = {
-      title: data.title.trim(),
-      description: data.description.trim(),
-      requirements: data.requirements,
-      salary: Number(data.salary),
-      experienceLevel: Number(data.experienceLevel),
-      location: data.location.trim(),
-      jobType: data.jobType,
-      position: Number(data.position),
-    };
-
-    console.log("CREATE JOB FORM DATA -");
-    for (const [key, value] of Object.entries(formattedJobPayload)) {
-      console.log(key, value);
-    }
-
-    console.log("Raw Form Values:", data);
-    console.log("Selected Company:", company?.name || "No company");
-
-    toast.success("Job form data logged to console! (API call pending)", {
-      icon: "📋",
-      duration: 4000,
-    });
+  // 3. Form submit handler - connects to useCreateJob hook and API
+  const handleCreateJobFormSubmit = async (formData) => {
+    await handleCreateJob(formData);
   };
 
   // Form reset karne ka handler
@@ -237,7 +230,10 @@ export default function CreateJobPage() {
 
       {/* Main Form Card */}
       <section className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/10">
-        <form onSubmit={handleSubmit(handleCreateJob)} className="p-6 sm:p-8 space-y-8">
+        <form
+          onSubmit={handleSubmit(handleCreateJobFormSubmit)}
+          className="p-6 sm:p-8 space-y-8"
+        >
           {/* Section 1: Role Overview */}
           <div className="space-y-6 border-b border-neutral-100 pb-8">
             <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
@@ -249,6 +245,7 @@ export default function CreateJobPage() {
             <Input
               label="Job Title *"
               type="text"
+              disabled={isProcessing}
               placeholder="e.g. Senior Frontend Engineer, Product Designer, DevOps Specialist"
               {...register("title")}
               error={errors.title?.message}
@@ -258,6 +255,7 @@ export default function CreateJobPage() {
             <Textarea
               label="Job Description *"
               rows={5}
+              disabled={isProcessing}
               placeholder="Describe the responsibilities, day-to-day impact, and what success looks like in this role..."
               {...register("description")}
               error={errors.description?.message}
@@ -269,7 +267,7 @@ export default function CreateJobPage() {
                 Key Requirements & Skills *
                 {selectedRequirements.length > 0 && (
                   <span className="ml-2 font-normal text-xs text-neutral-500">
-                    ({selectedRequirements.length} added)
+                    ({selectedRequirements.length}/{MAX_REQUIREMENTS_COUNT} added)
                   </span>
                 )}
               </label>
@@ -279,17 +277,18 @@ export default function CreateJobPage() {
                 <input
                   type="text"
                   value={requirementInput}
+                  disabled={isProcessing}
                   onChange={(e) => setRequirementInput(e.target.value)}
                   onKeyDown={handleRequirementKeyDown}
                   placeholder="Type a skill and press Enter (e.g. React, Docker, Node.js)"
-                  className="h-11 flex-1 rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100"
+                  className="h-11 flex-1 rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100 disabled:opacity-50"
                 />
 
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => handleAddRequirement()}
-                  disabled={!requirementInput.trim()}
+                  disabled={isProcessing || !requirementInput.trim()}
                   leftIcon={<Plus size={15} />}
                   className="h-11 px-4 text-xs font-semibold"
                 >
@@ -314,8 +313,9 @@ export default function CreateJobPage() {
                       <span>{requirement}</span>
                       <button
                         type="button"
+                        disabled={isProcessing}
                         onClick={() => handleRemoveRequirement(index)}
-                        className="rounded-full p-0.5 text-neutral-400 hover:bg-neutral-800 hover:text-white transition cursor-pointer"
+                        className="rounded-full p-0.5 text-neutral-400 hover:bg-neutral-800 hover:text-white transition cursor-pointer disabled:pointer-events-none"
                         title={`Remove ${requirement}`}
                       >
                         <X size={13} />
@@ -343,8 +343,9 @@ export default function CreateJobPage() {
                     <button
                       key={suggestedSkill}
                       type="button"
+                      disabled={isProcessing}
                       onClick={() => handleAddRequirement(suggestedSkill)}
-                      className="inline-flex items-center gap-1 rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer active:scale-95"
+                      className="inline-flex items-center gap-1 rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer active:scale-95 disabled:pointer-events-none disabled:opacity-50"
                     >
                       <Plus size={11} className="text-neutral-400" />
                       {suggestedSkill}
@@ -365,9 +366,10 @@ export default function CreateJobPage() {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
               {/* Salary */}
               <Input
-                label="Salary (LPA / Annual INR) *"
+                label="Salary (Annual INR) *"
                 type="number"
                 min="1"
+                disabled={isProcessing}
                 placeholder="e.g. 1200000 (12 LPA)"
                 {...register("salary")}
                 error={errors.salary?.message}
@@ -378,6 +380,7 @@ export default function CreateJobPage() {
                 label="Experience (in Years) *"
                 type="number"
                 min="0"
+                disabled={isProcessing}
                 placeholder="e.g. 2 (0 for Freshers)"
                 {...register("experienceLevel")}
                 error={errors.experienceLevel?.message}
@@ -388,6 +391,7 @@ export default function CreateJobPage() {
                 label="Open Vacancies *"
                 type="number"
                 min="1"
+                disabled={isProcessing}
                 placeholder="e.g. 1"
                 {...register("position")}
                 error={errors.position?.message}
@@ -415,11 +419,12 @@ export default function CreateJobPage() {
                     <button
                       key={type.value}
                       type="button"
+                      disabled={isProcessing}
                       onClick={() =>
                         setValue("jobType", type.value, { shouldValidate: true })
                       }
                       className={cn(
-                        "flex h-11 items-center justify-center rounded-lg border px-4 text-sm font-medium transition cursor-pointer active:scale-[0.98]",
+                        "flex h-11 items-center justify-center rounded-lg border px-4 text-sm font-medium transition cursor-pointer active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
                         isSelected
                           ? "border-neutral-900 bg-neutral-900 text-white shadow-xs"
                           : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50",
@@ -440,6 +445,7 @@ export default function CreateJobPage() {
             <Input
               label="Location *"
               type="text"
+              disabled={isProcessing}
               placeholder="e.g. Bengaluru, India or Remote"
               {...register("location")}
               error={errors.location?.message}
@@ -452,18 +458,18 @@ export default function CreateJobPage() {
               type="button"
               variant="outline"
               onClick={handleResetJobForm}
-              disabled={isSubmitting}
+              disabled={isProcessing}
             >
               Clear Form
             </Button>
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isProcessing}
               leftIcon={<PlusCircle size={16} />}
-              className="min-w-40"
+              className="min-w-44"
             >
-              {isSubmitting ? "Creating..." : "Create Job"}
+              {isProcessing ? "Publishing Job..." : "Publish Job Opening"}
             </Button>
           </div>
         </form>
