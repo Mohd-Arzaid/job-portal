@@ -106,7 +106,7 @@ export default function RecruiterDashboardPage() {
         </h2>
 
         <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-          Set up your organization, post openings, and start receiving applications from qualified candidates.
+          Set up your company, post openings, and start receiving applications from qualified candidates.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -118,7 +118,7 @@ export default function RecruiterDashboardPage() {
 
           <Link href="/recruiter/company">
             <Button variant="outline" leftIcon={<Building2 size={15} />}>
-              Setup Company Details
+              Company Details
             </Button>
           </Link>
         </div>

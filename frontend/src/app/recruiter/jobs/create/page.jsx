@@ -431,11 +431,11 @@ export default function CreateJobPage() {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
               {/* Salary */}
               <Input
-                label="Salary (Annual INR) *"
+                label="Salary (LPA) *"
                 type="number"
                 min="1"
                 disabled={isProcessing}
-                placeholder="e.g. 1200000 (12 LPA)"
+                placeholder="e.g. (12 LPA)"
                 {...register("salary")}
                 error={errors.salary?.message}
               />
