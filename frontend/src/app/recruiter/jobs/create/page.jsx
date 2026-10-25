@@ -48,19 +48,7 @@ const SUGGESTED_REQUIREMENTS = [
   "Git",
 ];
 
-const SUGGESTED_LOCATIONS = [
-  "Remote",
-  "Bengaluru",
-  "Mumbai",
-  "Delhi",
-  "Hyderabad",
-  "Pune",
-  "Chennai",
-  "Kolkata",
-];
-
 const MAX_REQUIREMENTS_COUNT = 15;
-const MAX_LOCATIONS_COUNT = 5;
 
 export default function CreateJobPage() {
   const company = useCompanyStore((state) => state.company);
@@ -72,9 +60,6 @@ export default function CreateJobPage() {
 
   // Requirements text input state
   const [requirementInput, setRequirementInput] = useState("");
-  
-  // Location text input state
-  const [locationInput, setLocationInput] = useState("");
 
   // 1. Recruiter ki registered company details fetch kar rahe hain
   useEffect(() => {
@@ -97,7 +82,7 @@ export default function CreateJobPage() {
       requirements: [],
       salary: "",
       experienceLevel: 0,
-      location: [],
+      location: "",
       jobType: "Full-time",
       position: 1,
     },
@@ -109,7 +94,6 @@ export default function CreateJobPage() {
   // watch() -> Jab field value ke according UI dynamically update karni ho
   const selectedJobType = watch("jobType");
   const selectedRequirements = watch("requirements") || [];
-  const selectedLocations = watch("location") || [];
 
   // Requirement add karne ka handler (Enter press ya Add button click par)
   const handleAddRequirement = (requirementToAdd) => {
@@ -159,54 +143,6 @@ export default function CreateJobPage() {
     }
   };
 
-  // Location add karne ka handler (Enter press ya Add button click par)
-  const handleAddLocation = (locationToAdd) => {
-    const trimmedLocation = (locationToAdd || locationInput).trim();
-    if (!trimmedLocation) return;
-
-    // Check maximum tags limit
-    if (selectedLocations.length >= MAX_LOCATIONS_COUNT) {
-      toast.error(`Maximum ${MAX_LOCATIONS_COUNT} locations allowed.`);
-      return;
-    }
-
-    // Duplicate check (case-insensitive)
-    if (
-      selectedLocations.some(
-        (item) => item.toLowerCase() === trimmedLocation.toLowerCase(),
-      )
-    ) {
-      toast.error(`"${trimmedLocation}" is already added!`);
-      return;
-    }
-
-    const updatedLocations = [...selectedLocations, trimmedLocation];
-    setValue("location", updatedLocations, { shouldValidate: true });
-    setLocationInput("");
-  };
-
-  // Location tag delete karne ka handler
-  const handleRemoveLocation = (indexToRemove) => {
-    const updatedLocations = selectedLocations.filter(
-      (_, index) => index !== indexToRemove,
-    );
-    setValue("location", updatedLocations, { shouldValidate: true });
-  };
-
-  // Enter key press par location add karo
-  const handleLocationKeyDown = (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault(); // Form ko submit hone se prevent karta hai
-      handleAddLocation();
-    } else if (
-      event.key === "Backspace" &&
-      !locationInput &&
-      selectedLocations.length > 0
-    ) {
-      handleRemoveLocation(selectedLocations.length - 1);
-    }
-  };
-
   // 3. Form submit handler - connects to useCreateJob hook and API
   const handleCreateJobFormSubmit = async (formData) => {
     await handleCreateJob(formData);
@@ -216,7 +152,6 @@ export default function CreateJobPage() {
   const handleResetJobForm = () => {
     reset();
     setRequirementInput("");
-    setLocationInput("");
     toast("Form cleared", { icon: "🧹" });
   };
 
@@ -506,99 +441,15 @@ export default function CreateJobPage() {
               )}
             </div>
 
-            {/* Location - Interactive Tags */}
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-neutral-800">
-                Location *
-                {selectedLocations.length > 0 && (
-                  <span className="ml-2 font-normal text-xs text-neutral-500">
-                    ({selectedLocations.length}/{MAX_LOCATIONS_COUNT} added)
-                  </span>
-                )}
-              </label>
-
-              {/* Tag Input Field with Add Button */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={locationInput}
-                  disabled={isProcessing}
-                  onChange={(e) => setLocationInput(e.target.value)}
-                  onKeyDown={handleLocationKeyDown}
-                  placeholder="Type a location and press Enter (e.g. Bengaluru, Remote)"
-                  className="h-11 flex-1 rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100 disabled:opacity-50"
-                />
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleAddLocation()}
-                  disabled={isProcessing || !locationInput.trim()}
-                  leftIcon={<Plus size={15} />}
-                  className="h-11 px-4 text-xs font-semibold"
-                >
-                  Add Location
-                </Button>
-              </div>
-
-              {errors.location && (
-                <p className="text-sm text-red-600">
-                  {errors.location.message}
-                </p>
-              )}
-
-              {/* Active Location Tags / Badges */}
-              {selectedLocations.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {selectedLocations.map((location, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-2xs"
-                    >
-                      <span>{location}</span>
-                      <button
-                        type="button"
-                        disabled={isProcessing}
-                        onClick={() => handleRemoveLocation(index)}
-                        className="rounded-full p-0.5 text-neutral-400 hover:bg-neutral-800 hover:text-white transition cursor-pointer disabled:pointer-events-none"
-                        title={`Remove ${location}`}
-                      >
-                        <X size={13} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Quick Location Suggestions */}
-              <div className="space-y-1.5 pt-1">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-400">
-                  <Sparkles size={12} />
-                  <span>Quick suggestions:</span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {SUGGESTED_LOCATIONS.filter(
-                    (suggested) =>
-                      !selectedLocations.some(
-                        (existing) =>
-                          existing.toLowerCase() === suggested.toLowerCase(),
-                      ),
-                  ).map((suggestedLocation) => (
-                    <button
-                      key={suggestedLocation}
-                      type="button"
-                      disabled={isProcessing}
-                      onClick={() => handleAddLocation(suggestedLocation)}
-                      className="inline-flex items-center gap-1 rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                    >
-                      <Plus size={11} className="text-neutral-400" />
-                      {suggestedLocation}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {/* Location */}
+            <Input
+              label="Location *"
+              type="text"
+              disabled={isProcessing}
+              placeholder="e.g. Bengaluru, India or Remote"
+              {...register("location")}
+              error={errors.location?.message}
+            />
           </div>
 
           {/* Form Actions */}

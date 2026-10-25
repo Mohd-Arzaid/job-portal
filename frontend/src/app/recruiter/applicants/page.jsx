@@ -159,22 +159,6 @@ function ApplicantsContent() {
     return `${salary} LPA`;
   };
 
-  // Format location and separate array values with commas
-  const formatLocation = (location) => {
-    if (!location) {
-      return "Location not specified";
-    }
-
-    if (Array.isArray(location)) {
-      return location
-        .map((item) => String(item).trim())
-        .filter(Boolean)
-        .join(", ");
-    }
-
-    // Strings should ideally be stored with commas by the job form/backend.
-    return String(location).trim();
-  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -341,7 +325,7 @@ function ApplicantsContent() {
                     {selectedJob.location && (
                       <span className="inline-flex items-center gap-1">
                         <MapPin size={13} className="text-neutral-400" />
-                        {formatLocation(selectedJob.location)}
+                        {selectedJob.location}
                       </span>
                     )}
 

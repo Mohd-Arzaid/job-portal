@@ -28,8 +28,9 @@ export const createJobSchema = z.object({
     }),
 
   location: z
-    .array(z.string().trim().min(1, "Location cannot be empty"))
-    .min(1, "Please add at least one location."),
+    .string()
+    .trim()
+    .min(2, "Location is required (e.g. Bengaluru, Karnataka, India or Remote, India)."),
 
   jobType: z.enum(["Full-time", "Part-time", "Internship", "Contract"], {
     message: "Please select a valid job type.",

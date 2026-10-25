@@ -17,9 +17,7 @@ export const createJobSchema = z.object({
     .int()
     .min(0, "Experience cannot be negative"),
 
-  location: z
-    .array(z.string().trim().min(1, "Location cannot be empty"))
-    .min(1, "At least one location is required"),
+  location: z.string().trim().min(1, "Location is required"),
 
   jobType: z.enum(["Full-time", "Part-time", "Internship", "Contract"]),
 

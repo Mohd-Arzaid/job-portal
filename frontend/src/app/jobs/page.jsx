@@ -184,9 +184,19 @@ function JobsContent() {
         // 3. Location Filter
         if (selectedLocations.length > 0) {
           const matchesLoc = selectedLocations.some((loc) => {
+            const locLower = loc.toLowerCase().trim();
+            const locCity = locLower.split(",")[0].trim().replace(/\s+ncr/i, "");
+            const effectiveLocation = (
+              typeof job.location === "string" && job.location.trim()
+                ? job.location
+                : typeof job.company?.location === "string"
+                  ? job.company.location
+                  : ""
+            ).toLowerCase();
+
             return (
-              job.location?.toLowerCase().includes(loc.toLowerCase()) ||
-              job.company?.location?.toLowerCase().includes(loc.toLowerCase())
+              effectiveLocation.includes(locLower) ||
+              effectiveLocation.includes(locCity)
             );
           });
 

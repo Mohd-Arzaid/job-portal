@@ -26,24 +26,6 @@ export default function RecruiterJobsListPage() {
     return `${Number(amount)} LPA`;
   };
 
-  // Format location with commas
-  const formatLocation = (location) => {
-    if (!location) return "Location not specified";
-
-    if (Array.isArray(location)) {
-      return location
-        .map((item) => String(item).trim())
-        .filter(Boolean)
-        .join(", ");
-    }
-
-    // Handles strings like "RemoteDelhi" or "RemoteBengaluruIndia"
-    if (typeof location === "string") {
-      return location.trim();
-    }
-
-    return String(location);
-  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -155,7 +137,7 @@ export default function RecruiterJobsListPage() {
                     <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-neutral-500">
                       <span className="inline-flex items-center gap-1">
                         <MapPin size={14} className="text-neutral-400" />
-                        {formatLocation(job.location)}
+                        {job.location || "Location not specified"}
                       </span>
 
                       <span className="inline-flex items-center gap-1">

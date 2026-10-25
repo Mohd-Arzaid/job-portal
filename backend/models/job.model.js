@@ -29,11 +29,10 @@ const jobSchema = new mongoose.Schema(
       required: true,
     },
 
-    location: [
-      {
-        type: String,
-      },
-    ],
+    location: {
+      type: String,
+      required: true,
+    },
 
     jobType: {
       type: String,
