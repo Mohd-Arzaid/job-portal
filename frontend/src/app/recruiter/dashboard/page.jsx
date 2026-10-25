@@ -21,14 +21,14 @@ export default function RecruiterDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Dashboard Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-neutral-200/80 pb-6">
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
             <BriefcaseBusiness size={16} />
             Recruiter Workspace
           </div>
 
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
             Welcome back, {user?.fullName || "Recruiter"}
           </h1>
 
@@ -39,43 +39,43 @@ export default function RecruiterDashboardPage() {
 
         <Link href="/recruiter/jobs/create">
           <Button leftIcon={<PlusCircle size={16} />}>
-            Post New Job
+            Post a Job
           </Button>
         </Link>
       </div>
 
       {/* Quick Stats / Overview Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs">
+        <div className="overflow-hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/10 transition hover:ring-black/20">
           <div className="flex items-center justify-between text-neutral-500">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Active Jobs
             </span>
             <BriefcaseBusiness size={18} />
           </div>
-          <p className="mt-3 text-3xl font-bold text-neutral-950">
+          <p className="mt-3 text-3xl font-bold tracking-tight text-neutral-950">
             {isJobsLoading ? "..." : recruiterJobs?.length || 0}
           </p>
           <Link
             href="/recruiter/jobs"
-            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-neutral-600 hover:text-neutral-950"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-neutral-600 hover:text-neutral-950 transition"
           >
             View all postings <ArrowUpRight size={13} />
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs">
+        <div className="overflow-hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/10 transition hover:ring-black/20">
           <div className="flex items-center justify-between text-neutral-500">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Applicants
             </span>
             <Users size={18} />
           </div>
-          <p className="mt-3 text-3xl font-bold text-neutral-950">0</p>
-          <p className="mt-1 text-xs text-neutral-500">Across all postings</p>
+          <p className="mt-3 text-3xl font-bold tracking-tight text-neutral-950">0</p>
+          <p className="mt-2 text-xs text-neutral-500">Across all postings</p>
         </div>
 
-        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs">
+        <div className="overflow-hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/10 transition hover:ring-black/20">
           <div className="flex items-center justify-between text-neutral-500">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Company
@@ -87,17 +87,17 @@ export default function RecruiterDashboardPage() {
           </p>
           <Link
             href="/recruiter/company"
-            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-neutral-700 hover:text-neutral-950"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-neutral-700 hover:text-neutral-950 transition"
           >
             Manage profile <ArrowUpRight size={13} />
           </Link>
         </div>
       </div>
 
-      {/* Recent Activity / Getting Started */}
-      <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs sm:p-8">
+      {/* Hiring Management Card */}
+      <section className="overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-black/10 sm:p-8">
         <h2 className="text-lg font-semibold tracking-tight text-neutral-950">
-          Get Started with Hiring
+          Hiring & Recruitment
         </h2>
 
         <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
@@ -107,7 +107,7 @@ export default function RecruiterDashboardPage() {
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/recruiter/jobs/create">
             <Button variant="default" leftIcon={<PlusCircle size={15} />}>
-              Create First Job
+              Post a Job
             </Button>
           </Link>
 
