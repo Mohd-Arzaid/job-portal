@@ -11,6 +11,7 @@ import {
   ChevronDown,
   BriefcaseBusiness,
   LoaderCircle,
+  FileText,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import useLogout from "@/hooks/use-logout";
@@ -55,7 +56,12 @@ export default function Navbar() {
   const profilePhoto = user?.profile?.profilePhoto;
 
   const navLinks = isRecruiter
-    ? [{ href: "/recruiter/dashboard", label: "Dashboard" }]
+    ? [
+        { href: "/", label: "Home" },
+        { href: "/jobs", label: "Find Jobs" },
+        { href: "/recruiter/dashboard", label: "Dashboard" },
+        { href: "/recruiter/jobs/create", label: "Post a Job" },
+      ]
     : [
         { href: "/", label: "Home" },
         { href: "/jobs", label: "Find Jobs" },
@@ -181,18 +187,27 @@ export default function Navbar() {
                   </div>
 
                   <div className="p-2">
-                    {isRecruiter ? (
+                    <DropdownLink
+                      href="/profile"
+                      icon={<UserRound size={17} />}
+                      label="My Profile"
+                      onClick={closeMenus}
+                    />
+
+                    {!isRecruiter && (
+                      <DropdownLink
+                        href="/applied-jobs"
+                        icon={<FileText size={17} />}
+                        label="Applied Jobs"
+                        onClick={closeMenus}
+                      />
+                    )}
+
+                    {isRecruiter && (
                       <DropdownLink
                         href="/recruiter/dashboard"
                         icon={<BriefcaseBusiness size={17} />}
-                        label="Dashboard"
-                        onClick={closeMenus}
-                      />
-                    ) : (
-                      <DropdownLink
-                        href="/profile"
-                        icon={<UserRound size={17} />}
-                        label="My Profile"
+                        label="Recruiter Dashboard"
                         onClick={closeMenus}
                       />
                     )}
@@ -273,17 +288,29 @@ export default function Navbar() {
                 </div>
 
                 <DropdownLink
-                  href={isRecruiter ? "/recruiter/dashboard" : "/profile"}
-                  icon={
-                    isRecruiter ? (
-                      <BriefcaseBusiness size={17} />
-                    ) : (
-                      <UserRound size={17} />
-                    )
-                  }
-                  label={isRecruiter ? "Dashboard" : "My Profile"}
+                  href="/profile"
+                  icon={<UserRound size={17} />}
+                  label="My Profile"
                   onClick={closeMenus}
                 />
+
+                {!isRecruiter && (
+                  <DropdownLink
+                    href="/applied-jobs"
+                    icon={<FileText size={17} />}
+                    label="Applied Jobs"
+                    onClick={closeMenus}
+                  />
+                )}
+
+                {isRecruiter && (
+                  <DropdownLink
+                    href="/recruiter/dashboard"
+                    icon={<BriefcaseBusiness size={17} />}
+                    label="Recruiter Dashboard"
+                    onClick={closeMenus}
+                  />
+                )}
 
                 <button
                   type="button"

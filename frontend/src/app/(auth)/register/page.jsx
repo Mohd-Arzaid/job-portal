@@ -10,10 +10,8 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignUpSchema } from "@/schemas/auth.schema";
 import { registerUser } from "@/api-services/auth.service";
-import FrontendLayout from "@/components/layouts/frontend-layout";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import RedirectIfAuthenticated from "@/routes/auth/redirect-if-authenticated";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -90,9 +88,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <RedirectIfAuthenticated>
-      <FrontendLayout>
-        <section className="flex items-center justify-center py-10 sm:py-12">
+    <section className="flex items-center justify-center py-10 sm:py-12">
           <div className="w-full max-w-lg">
             {/* Header */}
             <div className="mb-8 text-center">
@@ -289,7 +285,5 @@ export default function RegisterPage() {
             </p>
           </div>
         </section>
-      </FrontendLayout>
-    </RedirectIfAuthenticated>
   );
 }

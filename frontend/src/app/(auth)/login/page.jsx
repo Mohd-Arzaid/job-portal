@@ -1,6 +1,5 @@
 "use client";
 
-import FrontendLayout from "@/components/layouts/frontend-layout";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { loginSchema } from "@/schemas/auth.schema";
@@ -12,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { loginUser } from "@/api-services/auth.service";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import RedirectIfAuthenticated from "@/routes/auth/redirect-if-authenticated";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function LoginPage() {
@@ -74,9 +72,7 @@ export default function LoginPage() {
   };
 
   return (
-    <RedirectIfAuthenticated>
-      <FrontendLayout>
-        <section className="flex w-full items-center justify-center py-10 sm:py-12">
+    <section className="flex w-full items-center justify-center py-10 sm:py-12">
           <div className="w-full max-w-lg">
             {/* Header */}
             <div className="mb-8 text-center">
@@ -229,7 +225,5 @@ export default function LoginPage() {
             </p>
           </div>
         </section>
-      </FrontendLayout>
-    </RedirectIfAuthenticated>
   );
 }
