@@ -21,3 +21,8 @@ export const applicationEndpoints = {
   GET_APPLIED_JOBS_API: BASE_URL + "/application/applied-jobs",
 };
 
+export const companyEndpoints = {
+  REGISTER_COMPANY_API: BASE_URL + "/company/register",
+  GET_COMPANY_API: BASE_URL + "/company/get",
+};
+

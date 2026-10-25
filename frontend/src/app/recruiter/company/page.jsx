@@ -3,15 +3,20 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImagePlus, X, Building2, Globe, MapPin, Upload } from "lucide-react";
+import { X, Building2, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
 import Input from "@/components/ui/input";
 import Textarea from "@/components/ui/textarea";
 import Button from "@/components/ui/button";
 import { registerCompanySchema } from "@/schemas/company.schema";
+import { registerCompany } from "@/api-services/company.service";
 
 export default function RegisterCompanyPage() {
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
-  const [logoFile, setLogoFile] = useState(null);
+  const router = useRouter();
+  const [selectedCompanyLogoUrl, setSelectedCompanyLogoUrl] = useState("");
+  const [companyLogoFile, setCompanyLogoFile] = useState(null);
 
   // 1. React Hook Form with Zod validation
   const {
@@ -28,7 +33,7 @@ export default function RegisterCompanyPage() {
     },
   });
 
-  // 2. Form submit handler (as requested: logs all FormData without calling API)
+  // 2. Form submit handler with API call and toast notifications
   const handleRegisterCompany = async (data) => {
     const formData = new FormData();
 
@@ -38,16 +43,36 @@ export default function RegisterCompanyPage() {
     formData.append("website", data.website || "");
     formData.append("location", data.location || "");
 
-    if (logoFile) {
-      formData.append("file", logoFile);
+    if (companyLogoFile) {
+      formData.append("file", companyLogoFile);
     }
 
-    console.log("=========================================");
-    console.log("🏢 REGISTER COMPANY FORM DATA -");
-    console.log("=========================================");
+    console.log("REGISTER COMPANY FORM DATA -");
 
     for (const [key, value] of formData.entries()) {
-      console.log(key, value instanceof File ? value.name : value);
+      console.log(key, value instanceof File ? value.name : value); // instanceof File -> true -> then // Print file name instead of the entire File object
+    }
+
+    try {
+      // REGISTER COMPANY API CALL
+      const response = await registerCompany(formData);
+
+      toast.success(response?.message || "Company registered successfully!");
+
+      router.push("/recruiter/dashboard");
+    } catch (error) {
+      console.error(
+        "REGISTER COMPANY API ERROR............",
+        error.response?.data || error.message,
+      );
+
+      const errorMessage =
+        error.response?.data?.errors?.[0] ||
+        error.response?.data?.message ||
+        error.message ||
+        "Something went wrong. Please try again.";
+
+      toast.error(errorMessage);
     }
   };
 
@@ -56,16 +81,16 @@ export default function RegisterCompanyPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setLogoFile(file);
-    setLogoPreviewUrl(URL.createObjectURL(file));
+    setCompanyLogoFile(file);
+    setSelectedCompanyLogoUrl(URL.createObjectURL(file));
   };
 
   // 4. Remove selected logo
   const handleRemoveLogo = () => {
-    setLogoFile(null);
-    if (logoPreviewUrl) {
-      URL.revokeObjectURL(logoPreviewUrl);
-      setLogoPreviewUrl("");
+    setCompanyLogoFile(null);
+    if (selectedCompanyLogoUrl) {
+      URL.revokeObjectURL(selectedCompanyLogoUrl);
+      setSelectedCompanyLogoUrl("");
     }
   };
 
@@ -78,14 +103,18 @@ export default function RegisterCompanyPage() {
             Register Company
           </h1>
           <p className="mt-1.5 max-w-[68ch] text-sm text-neutral-500">
-            Create your company profile to start publishing job listings and hiring talent.
+            Create your company profile to start publishing job listings and
+            hiring talent.
           </p>
         </div>
       </header>
 
       {/* Main Form Section */}
       <section className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/10">
-        <form onSubmit={handleSubmit(handleRegisterCompany)} className="p-6 sm:p-8 space-y-6">
+        <form
+          onSubmit={handleSubmit(handleRegisterCompany)}
+          className="p-6 sm:p-8 space-y-6"
+        >
           {/* 1. Company Name */}
           <Input
             label="Company Name"
@@ -133,9 +162,9 @@ export default function RegisterCompanyPage() {
             <div className="flex flex-col gap-4 rounded-xl border border-dashed border-neutral-300 p-5 transition hover:border-neutral-400 bg-neutral-50/40 sm:flex-row sm:items-center">
               {/* Logo Preview Avatar */}
               <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-2xs">
-                {logoPreviewUrl ? (
+                {selectedCompanyLogoUrl ? (
                   <img
-                    src={logoPreviewUrl}
+                    src={selectedCompanyLogoUrl}
                     alt="Company Logo Preview"
                     className="size-full object-cover"
                   />
@@ -149,7 +178,9 @@ export default function RegisterCompanyPage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg bg-neutral-900 px-4 text-xs font-medium text-white transition hover:bg-neutral-800 active:scale-[0.98]">
                     <Upload size={14} />
-                    <span>{logoPreviewUrl ? "Change Logo" : "Upload Logo"}</span>
+                    <span>
+                      {selectedCompanyLogoUrl ? "Change Logo" : "Upload Logo"}
+                    </span>
                     <input
                       type="file"
                       accept="image/*"
@@ -158,7 +189,7 @@ export default function RegisterCompanyPage() {
                     />
                   </label>
 
-                  {logoPreviewUrl && (
+                  {selectedCompanyLogoUrl && (
                     <button
                       type="button"
                       onClick={handleRemoveLogo}
@@ -179,11 +210,7 @@ export default function RegisterCompanyPage() {
 
           {/* Form Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="min-w-[160px]"
-            >
+            <Button type="submit" disabled={isSubmitting} className="min-w-40">
               {isSubmitting ? "Registering..." : "Register Company"}
             </Button>
           </div>
