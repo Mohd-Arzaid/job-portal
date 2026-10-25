@@ -184,10 +184,13 @@ function ApplicantsContent() {
     };
   }, [applicants]);
 
-  // Helper to sanitize candidate name and remove "(Recruiter)"
+  // Helper to sanitize candidate name and remove "(Recruiter)" or "(Student)"
   const cleanCandidateName = (name) => {
     if (!name) return "Anonymous Candidate";
-    return name.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "Candidate";
+    return (
+      name.replace(/\s*\(\s*(?:student|recruiter)\s*\)/gi, "").trim() ||
+      "Candidate"
+    );
   };
 
   return (

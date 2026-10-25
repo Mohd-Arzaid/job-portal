@@ -20,7 +20,8 @@ export default function RecruiterDashboardPage() {
 
   const rawName = user?.fullName || "Recruiter";
   const displayName =
-    rawName.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "Recruiter";
+    rawName.replace(/\s*\(\s*(?:student|recruiter)\s*\)/gi, "").trim() ||
+    "Recruiter";
 
   return (
     <div className="space-y-8">

@@ -21,7 +21,8 @@ export default function ProfilePage() {
 
   const rawName = user?.fullName || "User Name";
   const displayName =
-    rawName.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "User Name";
+    rawName.replace(/\s*\(\s*(?:student|recruiter)\s*\)/gi, "").trim() ||
+    "User Name";
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-white px-4 py-10 sm:px-6 sm:py-14">

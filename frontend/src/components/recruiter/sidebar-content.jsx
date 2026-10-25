@@ -42,10 +42,11 @@ export default function SidebarContent({ pathname, closeSidebar }) {
   const { handleLogout, isLoggingOut } = useLogout();
   const user = useAuthStore((state) => state.user);
 
-  // Strip "(Recruiter)" or "(recruiter)" from displayed user name
+  // Strip "(Recruiter)" or "(Student)" from displayed user name
   const rawName = user?.fullName || "Recruiter";
   const displayName =
-    rawName.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "Recruiter";
+    rawName.replace(/\s*\(\s*(?:student|recruiter)\s*\)/gi, "").trim() ||
+    "Recruiter";
 
   return (
     <div className="flex h-full flex-col justify-between bg-neutral-50 text-neutral-900">

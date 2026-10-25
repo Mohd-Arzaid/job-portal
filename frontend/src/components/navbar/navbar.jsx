@@ -53,7 +53,8 @@ export default function Navbar() {
 
   const isRecruiter = user?.role === "recruiter";
   const rawName = user?.fullName || user?.fullname || "User";
-  const fullName = rawName.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "User";
+  const fullName =
+    rawName.replace(/\s*\(\s*(?:student|recruiter)\s*\)/gi, "").trim() || "User";
   const profilePhoto = user?.profile?.profilePhoto;
 
   const navLinks = isRecruiter
