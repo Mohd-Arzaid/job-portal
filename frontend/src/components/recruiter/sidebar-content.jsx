@@ -118,8 +118,11 @@ export default function SidebarContent({ pathname, closeSidebar }) {
                   const Icon = item.icon;
                   const isActive =
                     pathname === item.href ||
-                    (item.href !== "/recruiter/dashboard" &&
-                      pathname?.startsWith(item.href));
+                    (item.href === "/recruiter/jobs"
+                      ? pathname?.startsWith("/recruiter/jobs") &&
+                        pathname !== "/recruiter/jobs/create"
+                      : item.href !== "/recruiter/dashboard" &&
+                        pathname?.startsWith(item.href));
 
                   return (
                     <Link
