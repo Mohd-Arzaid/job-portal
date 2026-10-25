@@ -20,6 +20,7 @@ import {
   LoaderCircle,
   PlusCircle,
   MapPin,
+  AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -114,8 +115,29 @@ function ApplicantsContent() {
     });
   };
 
+  // Active job details
+  const selectedJob = useMemo(() => {
+    return recruiterJobs?.find((job) => job._id === selectedJobId) || null;
+  }, [recruiterJobs, selectedJobId]);
+
+  const totalPositions = Number(selectedJob?.position) || 1;
+
   // Update application status
   const handleStatusUpdate = async (applicationId, newStatus) => {
+    // Vacancy capacity check when accepting
+    if (newStatus === "Accepted") {
+      const currentlyAccepted = applicants.filter(
+        (app) => app.status === "Accepted" && app._id !== applicationId,
+      ).length;
+
+      if (currentlyAccepted >= totalPositions) {
+        toast.error(
+          `Cannot accept: All ${totalPositions} open vacancies are already filled! Move an accepted candidate to Rejected first to free up a position.`,
+        );
+        return;
+      }
+    }
+
     setUpdatingId(applicationId);
 
     try {
@@ -138,11 +160,6 @@ function ApplicantsContent() {
       setUpdatingId(null);
     }
   };
-
-  // Active job details
-  const selectedJob = useMemo(() => {
-    return recruiterJobs?.find((job) => job._id === selectedJobId) || null;
-  }, [recruiterJobs, selectedJobId]);
 
   // Format salary in LPA: $6 LPA, $12 LPA
   const formatSalary = (amount) => {
@@ -206,6 +223,10 @@ function ApplicantsContent() {
       Rejected: applicants.filter((a) => a.status === "Rejected").length,
     };
   }, [applicants]);
+
+  const acceptedCount = statusCounts.Accepted || 0;
+  const isVacanciesFull = acceptedCount >= totalPositions;
+  const isOverCapacity = acceptedCount > totalPositions;
 
   // Clean candidate name
   const cleanCandidateName = (name) => {
@@ -337,6 +358,12 @@ function ApplicantsContent() {
                       )}
 
                     <span className="inline-flex items-center gap-1">
+                      <BriefcaseBusiness size={13} className="text-neutral-400" />
+                      {totalPositions}{" "}
+                      {totalPositions === 1 ? "vacancy" : "vacancies"}
+                    </span>
+
+                    <span className="inline-flex items-center gap-1">
                       <Users size={13} className="text-neutral-400" />
                       {applicants.length}{" "}
                       {applicants.length === 1 ? "applicant" : "applicants"}
@@ -353,6 +380,60 @@ function ApplicantsContent() {
                   <span>Public View</span>
                   <ExternalLink size={12} className="text-neutral-400" />
                 </Link>
+              </div>
+
+              {/* Vacancy Progress Tracker Bar */}
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200/80 bg-neutral-50/70 p-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-white border border-neutral-200 text-neutral-700 shadow-2xs">
+                    <BriefcaseBusiness size={14} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 block">
+                      Hiring Progress
+                    </span>
+                    <span className="text-xs font-semibold text-neutral-950">
+                      {acceptedCount} of {totalPositions}{" "}
+                      {totalPositions === 1 ? "seat" : "seats"} filled
+                    </span>
+                  </div>
+                </div>
+
+                {isOverCapacity ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-900 shadow-2xs">
+                    <AlertTriangle size={13} />
+                    Over Capacity ({acceptedCount - totalPositions} excess accepted)
+                  </span>
+                ) : isVacanciesFull ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 text-xs font-semibold text-emerald-900 shadow-2xs">
+                    <CheckCircle2 size={13} />
+                    All Vacancies Filled
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-600 shadow-2xs">
+                    <Clock size={12} className="text-neutral-400" />
+                    {totalPositions - acceptedCount}{" "}
+                    {totalPositions - acceptedCount === 1
+                      ? "vacancy"
+                      : "vacancies"}{" "}
+                    remaining
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Over Capacity Warning Alert */}
+          {isOverCapacity && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-950 shadow-xs">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
+              <div className="space-y-1">
+                <p className="font-semibold text-amber-950 text-sm">
+                  Over-Hiring Alert: {acceptedCount} candidates accepted for {totalPositions} open vacancies
+                </p>
+                <p className="text-amber-800 leading-relaxed">
+                  You have accepted {acceptedCount} candidates, but this job only has {totalPositions} open {totalPositions === 1 ? "position" : "positions"}. You can click &quot;Move to Rejected&quot; on any candidate below to stay within capacity.
+                </p>
               </div>
             </div>
           )}
@@ -566,16 +647,21 @@ function ApplicantsContent() {
                           </a>
                         )}
 
-                        {/* Status Buttons */}
-                        <div className="flex items-center gap-1.5">
-                          {application.status !== "Accepted" && (
+                        {/* Status Decision Actions */}
+                        {application.status === "Pending" ? (
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
                               onClick={() =>
                                 handleStatusUpdate(application._id, "Accepted")
                               }
-                              disabled={isUpdating}
-                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-xs transition hover:bg-emerald-700 disabled:opacity-50"
+                              disabled={isUpdating || (isVacanciesFull && !isOverCapacity)}
+                              title={
+                                isVacanciesFull && !isOverCapacity
+                                  ? `All ${totalPositions} vacancies are filled`
+                                  : "Accept applicant"
+                              }
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {isUpdating ? (
                                 <LoaderCircle
@@ -587,16 +673,14 @@ function ApplicantsContent() {
                               )}
                               <span>Accept</span>
                             </button>
-                          )}
 
-                          {application.status !== "Rejected" && (
                             <button
                               type="button"
                               onClick={() =>
                                 handleStatusUpdate(application._id, "Rejected")
                               }
                               disabled={isUpdating}
-                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 shadow-xs transition hover:bg-red-50 disabled:opacity-50"
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-xs transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 active:scale-95 disabled:opacity-50"
                             >
                               {isUpdating ? (
                                 <LoaderCircle
@@ -608,8 +692,67 @@ function ApplicantsContent() {
                               )}
                               <span>Reject</span>
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        ) : application.status === "Accepted" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                              <CheckCircle2 size={12} className="text-emerald-600" />
+                              Accepted
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleStatusUpdate(application._id, "Rejected")
+                              }
+                              disabled={isUpdating}
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs font-medium text-neutral-600 shadow-2xs transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 active:scale-95 disabled:opacity-50"
+                              title="Move this candidate to Rejected"
+                            >
+                              {isUpdating ? (
+                                <LoaderCircle
+                                  size={11}
+                                  className="animate-spin"
+                                />
+                              ) : (
+                                <XCircle size={11} className="text-neutral-400 hover:text-red-600" />
+                              )}
+                              <span>Move to Rejected</span>
+                            </button>
+                          </div>
+                        ) : (
+                          /* Rejected State */
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-800">
+                              <XCircle size={12} className="text-red-600" />
+                              Rejected
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleStatusUpdate(application._id, "Accepted")
+                              }
+                              disabled={isUpdating || (isVacanciesFull && !isOverCapacity)}
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-xs font-medium text-neutral-600 shadow-2xs transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                              title={
+                                isVacanciesFull && !isOverCapacity
+                                  ? `All ${totalPositions} vacancies are filled`
+                                  : "Reconsider and accept candidate"
+                              }
+                            >
+                              {isUpdating ? (
+                                <LoaderCircle
+                                  size={11}
+                                  className="animate-spin"
+                                />
+                              ) : (
+                                <CheckCircle2 size={11} className="text-neutral-400 hover:text-emerald-600" />
+                              )}
+                              <span>Reconsider</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
