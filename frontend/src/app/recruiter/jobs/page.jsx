@@ -26,7 +26,6 @@ export default function RecruiterJobsListPage() {
     return `${Number(amount)} LPA`;
   };
 
-
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "";

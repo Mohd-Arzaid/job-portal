@@ -445,6 +445,7 @@ export default function CreateJobPage() {
             <Input
               label="Location *"
               type="text"
+              autoComplete="off"
               disabled={isProcessing}
               placeholder="e.g. Bengaluru, India or Remote"
               {...register("location")}
