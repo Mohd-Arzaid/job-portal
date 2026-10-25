@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,13 +9,12 @@ import {
   Building2,
   DollarSign,
   MapPin,
-  Clock,
-  Users,
   AlertTriangle,
   ArrowRight,
   PlusCircle,
-  FileText,
-  ListChecks,
+  Plus,
+  X,
+  Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -33,10 +32,28 @@ const JOB_TYPES = [
   { label: "Contract", value: "Contract" },
 ];
 
+const SUGGESTED_SKILLS = [
+  "React",
+  "Node.js",
+  "TypeScript",
+  "Next.js",
+  "Tailwind CSS",
+  "MongoDB",
+  "Express.js",
+  "Python",
+  "SQL",
+  "Docker",
+  "AWS",
+  "Git",
+];
+
 export default function CreateJobPage() {
   const company = useCompanyStore((state) => state.company);
   const isCompanyLoading = useCompanyStore((state) => state.isLoading);
   const initializeCompany = useCompanyStore((state) => state.initializeCompany);
+
+  // Skill input field state
+  const [skillInput, setSkillInput] = useState("");
 
   // 1. Fetch registered company details on mount
   useEffect(() => {
@@ -56,7 +73,7 @@ export default function CreateJobPage() {
     defaultValues: {
       title: "",
       description: "",
-      requirements: "",
+      requirements: [],
       salary: "",
       experienceLevel: 0,
       location: "",
@@ -66,21 +83,46 @@ export default function CreateJobPage() {
   });
 
   const selectedJobType = watch("jobType");
+  const requirements = watch("requirements") || [];
+
+  // Skill add karne ka handler (Enter press ya Add button click par)
+  const handleAddSkill = (skillToAdd) => {
+    const trimmed = (skillToAdd || skillInput).trim();
+    if (!trimmed) return;
+
+    // Duplicate check (case-insensitive)
+    if (requirements.some((r) => r.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error(`"${trimmed}" is already added!`);
+      return;
+    }
+
+    const updated = [...requirements, trimmed];
+    setValue("requirements", updated, { shouldValidate: true });
+    setSkillInput("");
+  };
+
+  // Skill remove karne ka handler
+  const handleRemoveSkill = (indexToRemove) => {
+    const updated = requirements.filter((_, idx) => idx !== indexToRemove);
+    setValue("requirements", updated, { shouldValidate: true });
+  };
+
+  // Enter key press par skill add karo
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Form submit hone se rokta hai
+      handleAddSkill();
+    } else if (e.key === "Backspace" && !skillInput && requirements.length > 0) {
+      handleRemoveSkill(requirements.length - 1);
+    }
+  };
 
   // 3. Form submit handler (as requested: console logs the form data without making API call)
   const handleCreateJob = async (data) => {
-    // Backend expects requirements as an array of strings
-    const requirementsArray = data.requirements
-      ? data.requirements
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : [];
-
     const formattedPayload = {
       title: data.title.trim(),
       description: data.description.trim(),
-      requirements: requirementsArray,
+      requirements: data.requirements,
       salary: Number(data.salary),
       experienceLevel: Number(data.experienceLevel),
       location: data.location.trim(),
@@ -102,6 +144,12 @@ export default function CreateJobPage() {
     });
   };
 
+  const handleClearForm = () => {
+    reset();
+    setSkillInput("");
+    toast("Form cleared", { icon: "🧹" });
+  };
+
   // 4. Loading State while checking company registration
   if (isCompanyLoading) {
     return (
@@ -115,7 +163,6 @@ export default function CreateJobPage() {
   }
 
   // 5. Warning if recruiter has not registered a company yet
-  // Backend rule: job.controller.js enforces "Please register your company first"
   if (!company) {
     return (
       <div className="w-full space-y-6">
@@ -204,18 +251,94 @@ export default function CreateJobPage() {
               error={errors.description?.message}
             />
 
-            {/* Requirements */}
-            <div className="space-y-1.5">
-              <Input
-                label="Key Requirements & Skills *"
-                type="text"
-                placeholder="React, Node.js, TypeScript, Next.js, Tailwind CSS (comma separated)"
-                {...register("requirements")}
-                error={errors.requirements?.message}
-              />
-              <p className="text-xs text-neutral-400">
-                Separate individual skills with commas. Candidates will see these as requirement badges.
-              </p>
+            {/* Interactive Requirements / Skills Tags */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-neutral-800">
+                Key Requirements & Skills *
+                {requirements.length > 0 && (
+                  <span className="ml-2 font-normal text-xs text-neutral-500">
+                    ({requirements.length} added)
+                  </span>
+                )}
+              </label>
+
+              {/* Tag Input Field with Add Button */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a skill and press Enter (e.g. React, Docker, Node.js)"
+                  className="h-11 flex-1 rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100"
+                />
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleAddSkill()}
+                  disabled={!skillInput.trim()}
+                  leftIcon={<Plus size={15} />}
+                  className="h-11 px-4 text-xs font-semibold"
+                >
+                  Add Skill
+                </Button>
+              </div>
+
+              {errors.requirements && (
+                <p className="text-sm text-red-600">
+                  {errors.requirements.message}
+                </p>
+              )}
+
+              {/* Active Tags / Badges */}
+              {requirements.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {requirements.map((req, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-2xs"
+                    >
+                      <span>{req}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill(index)}
+                        className="rounded-full p-0.5 text-neutral-400 hover:bg-neutral-800 hover:text-white transition cursor-pointer"
+                        title={`Remove ${req}`}
+                      >
+                        <X size={13} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick Suggestions */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-400">
+                  <Sparkles size={12} />
+                  <span>Quick suggestions:</span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {SUGGESTED_SKILLS.filter(
+                    (s) =>
+                      !requirements.some(
+                        (r) => r.toLowerCase() === s.toLowerCase(),
+                      ),
+                  ).map((skill) => (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => handleAddSkill(skill)}
+                      className="inline-flex items-center gap-1 rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer active:scale-95"
+                    >
+                      <Plus size={11} className="text-neutral-400" />
+                      {skill}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -315,7 +438,7 @@ export default function CreateJobPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => reset()}
+              onClick={handleClearForm}
               disabled={isSubmitting}
             >
               Clear Form

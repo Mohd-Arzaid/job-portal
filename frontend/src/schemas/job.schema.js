@@ -12,9 +12,8 @@ export const createJobSchema = z.object({
     .min(10, "Job description must be at least 10 characters."),
 
   requirements: z
-    .string()
-    .trim()
-    .min(2, "Requirements are required (comma separated)."),
+    .array(z.string().trim().min(1, "Requirement cannot be empty"))
+    .min(1, "Please add at least one requirement or skill."),
 
   salary: z.coerce
     .number({
