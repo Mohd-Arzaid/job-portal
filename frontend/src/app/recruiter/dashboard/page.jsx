@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import Button from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
+import { useCompanyStore } from "@/store/company.store";
 
 export default function RecruiterDashboardPage() {
   const user = useAuthStore((state) => state.user);
+  const company = useCompanyStore((state) => state.company);
 
   return (
     <div className="space-y-8">
@@ -72,7 +74,7 @@ export default function RecruiterDashboardPage() {
             <Building2 size={18} />
           </div>
           <p className="mt-3 text-base font-semibold text-neutral-950 truncate">
-            {user?.company?.name || "Register Company"}
+            {company?.name || user?.company?.name || "Register Company"}
           </p>
           <Link
             href="/recruiter/company"

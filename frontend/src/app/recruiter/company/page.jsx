@@ -1,10 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Building2, Upload } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  X,
+  Building2,
+  Upload,
+  Globe,
+  MapPin,
+  ExternalLink,
+  PlusCircle,
+  CheckCircle2,
+  Calendar,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 import Input from "@/components/ui/input";
@@ -12,13 +22,24 @@ import Textarea from "@/components/ui/textarea";
 import Button from "@/components/ui/button";
 import { registerCompanySchema } from "@/schemas/company.schema";
 import { registerCompany } from "@/api-services/company.service";
+import { useCompanyStore } from "@/store/company.store";
 
-export default function RegisterCompanyPage() {
-  const router = useRouter();
+export default function CompanyPage() {
+  const company = useCompanyStore((state) => state.company);
+  const isCompanyLoading = useCompanyStore((state) => state.isLoading);
+  const setCompany = useCompanyStore((state) => state.setCompany);
+  const initializeCompany = useCompanyStore((state) => state.initializeCompany);
+
+  // Logo file state for registration form
   const [selectedCompanyLogoUrl, setSelectedCompanyLogoUrl] = useState("");
   const [companyLogoFile, setCompanyLogoFile] = useState(null);
 
-  // 1. React Hook Form with Zod validation
+  // 1. Fetch company details on page load if not already fetched
+  useEffect(() => {
+    initializeCompany();
+  }, [initializeCompany]);
+
+  // 2. React Hook Form with Zod validation
   const {
     register,
     handleSubmit,
@@ -33,7 +54,7 @@ export default function RegisterCompanyPage() {
     },
   });
 
-  // 2. Form submit handler with API call and toast notifications
+  // 3. Form submit handler: company register hone par store update hoga
   const handleRegisterCompany = async (data) => {
     const formData = new FormData();
 
@@ -59,7 +80,10 @@ export default function RegisterCompanyPage() {
 
       toast.success(response?.message || "Company registered successfully!");
 
-      router.push("/recruiter/dashboard");
+      // Update Zustand company store with registered company data
+      if (response?.data) {
+        setCompany(response.data);
+      }
     } catch (error) {
       console.error(
         "REGISTER COMPANY API ERROR............",
@@ -76,7 +100,7 @@ export default function RegisterCompanyPage() {
     }
   };
 
-  // 3. Logo upload handler
+  // 4. Logo upload handler
   const handleLogoChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -85,7 +109,7 @@ export default function RegisterCompanyPage() {
     setSelectedCompanyLogoUrl(URL.createObjectURL(file));
   };
 
-  // 4. Remove selected logo
+  // 5. Remove selected logo
   const handleRemoveLogo = () => {
     setCompanyLogoFile(null);
     if (selectedCompanyLogoUrl) {
@@ -94,6 +118,141 @@ export default function RegisterCompanyPage() {
     }
   };
 
+  // 6. LOADING STATE: Spinner jab company fetch ho rahi ho
+  if (isCompanyLoading) {
+    return (
+      <div className="flex min-h-[350px] w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
+          <p className="text-xs text-neutral-500">Loading company details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 7. ALREADY REGISTERED: Agar company pehle se registered hai toh details dikhao
+  if (company) {
+    return (
+      <div className="w-full space-y-6">
+        {/* Header */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-neutral-200/80 pb-6">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 md:text-3xl">
+                Company Profile
+              </h1>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/20">
+                <CheckCircle2 size={13} />
+                Registered
+              </span>
+            </div>
+            <p className="mt-1.5 max-w-[68ch] text-sm text-neutral-500">
+              Your registered organization details and public company profile.
+            </p>
+          </div>
+
+          <Link href="/recruiter/jobs/create">
+            <Button leftIcon={<PlusCircle size={16} />}>
+              Post a Job
+            </Button>
+          </Link>
+        </header>
+
+        {/* Company Details Card */}
+        <section className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/10">
+          {/* Top Banner / Logo & Name */}
+          <div className="border-b border-neutral-100 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+              {/* Logo */}
+              <div className="flex size-20 shrink-0 p-1 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 shadow-2xs">
+                {company.logo ? (
+                  <img
+                    src={company.logo}
+                    alt={company.name}
+                    className="size-full object-contain"
+                  />
+                ) : (
+                  <Building2 className="size-9 text-neutral-400" />
+                )}
+              </div>
+
+              {/* Title & Metadata */}
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl font-bold text-neutral-950 sm:text-2xl">
+                  {company.name}
+                </h2>
+
+                <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-neutral-500">
+                  {company.location && (
+                    <span className="inline-flex items-center gap-1.5 text-neutral-600">
+                      <MapPin size={14} className="text-neutral-400" />
+                      {company.location}
+                    </span>
+                  )}
+
+                  {company.website && (
+                    <a
+                      href={
+                        company.website.startsWith("http")
+                          ? company.website
+                          : `https://${company.website}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 font-medium text-neutral-900 underline underline-offset-4 hover:text-neutral-600"
+                    >
+                      <Globe size={14} className="text-neutral-400" />
+                      Visit Website
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
+
+                  {company.createdAt && (
+                    <span className="inline-flex items-center gap-1.5 text-neutral-500">
+                      <Calendar size={14} className="text-neutral-400" />
+                      Joined {new Date(company.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Details Body */}
+          <div className="p-6 sm:p-8 space-y-6">
+            {/* Description */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                About the Organization
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-700 whitespace-pre-line">
+                {company.description || "No description provided."}
+              </p>
+            </div>
+
+            {/* Quick Summary Grid */}
+            <div className="grid grid-cols-1 gap-4 rounded-xl border border-neutral-100 bg-neutral-50/50 p-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium text-neutral-400">Headquarters</p>
+                <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  {company.location || "Not specified"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-neutral-400">Website</p>
+                <p className="mt-1 text-sm font-semibold text-neutral-900 truncate">
+                  {company.website || "Not specified"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // 8. NOT REGISTERED: Agar company register nahi hai, toh form dikhao
   return (
     <div className="w-full space-y-6">
       {/* Header */}
