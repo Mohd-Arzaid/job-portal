@@ -21,6 +21,8 @@ export const jobEndpoints = {
 export const applicationEndpoints = {
   APPLY_JOB_API: BASE_URL + "/application",
   GET_APPLIED_JOBS_API: BASE_URL + "/application/applied-jobs",
+  GET_APPLICANTS_API: BASE_URL + "/application",
+  UPDATE_APPLICATION_STATUS_API: BASE_URL + "/application",
 };
 
 export const companyEndpoints = {
