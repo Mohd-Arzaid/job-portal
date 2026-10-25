@@ -32,7 +32,7 @@ const JOB_TYPES = [
   { label: "Contract", value: "Contract" },
 ];
 
-const SUGGESTED_SKILLS = [
+const SUGGESTED_REQUIREMENTS = [
   "React",
   "Node.js",
   "TypeScript",
@@ -52,10 +52,10 @@ export default function CreateJobPage() {
   const isCompanyLoading = useCompanyStore((state) => state.isLoading);
   const initializeCompany = useCompanyStore((state) => state.initializeCompany);
 
-  // Skill input field state
-  const [skillInput, setSkillInput] = useState("");
+  // Requirements text input state
+  const [requirementInput, setRequirementInput] = useState("");
 
-  // 1. Fetch registered company details on mount
+  // 1. Recruiter ki registered company details fetch kar rahe hain
   useEffect(() => {
     initializeCompany();
   }, [initializeCompany]);
@@ -82,44 +82,55 @@ export default function CreateJobPage() {
     },
   });
 
+  // watch() -> Jab field value ke according UI dynamically update karni ho
   const selectedJobType = watch("jobType");
-  const requirements = watch("requirements") || [];
+  const selectedRequirements = watch("requirements") || [];
 
-  // Skill add karne ka handler (Enter press ya Add button click par)
-  const handleAddSkill = (skillToAdd) => {
-    const trimmed = (skillToAdd || skillInput).trim();
-    if (!trimmed) return;
+  // Requirement add karne ka handler (Enter press ya Add button click par)
+  const handleAddRequirement = (requirementToAdd) => {
+    const trimmedRequirement = (requirementToAdd || requirementInput).trim();
+    if (!trimmedRequirement) return;
 
     // Duplicate check (case-insensitive)
-    if (requirements.some((r) => r.toLowerCase() === trimmed.toLowerCase())) {
-      toast.error(`"${trimmed}" is already added!`);
+    if (
+      selectedRequirements.some(
+        (item) => item.toLowerCase() === trimmedRequirement.toLowerCase(),
+      )
+    ) {
+      toast.error(`"${trimmedRequirement}" is already added!`);
       return;
     }
 
-    const updated = [...requirements, trimmed];
-    setValue("requirements", updated, { shouldValidate: true });
-    setSkillInput("");
+    const updatedRequirements = [...selectedRequirements, trimmedRequirement];
+    setValue("requirements", updatedRequirements, { shouldValidate: true });
+    setRequirementInput("");
   };
 
-  // Skill remove karne ka handler
-  const handleRemoveSkill = (indexToRemove) => {
-    const updated = requirements.filter((_, idx) => idx !== indexToRemove);
-    setValue("requirements", updated, { shouldValidate: true });
+  // Requirement tag delete karne ka handler
+  const handleRemoveRequirement = (indexToRemove) => {
+    const updatedRequirements = selectedRequirements.filter(
+      (_, index) => index !== indexToRemove,
+    );
+    setValue("requirements", updatedRequirements, { shouldValidate: true });
   };
 
-  // Enter key press par skill add karo
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault(); // Form submit hone se rokta hai
-      handleAddSkill();
-    } else if (e.key === "Backspace" && !skillInput && requirements.length > 0) {
-      handleRemoveSkill(requirements.length - 1);
+  // Enter key press par requirement add karo
+  const handleRequirementKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault(); // Form ko submit hone se prevent karta hai
+      handleAddRequirement();
+    } else if (
+      event.key === "Backspace" &&
+      !requirementInput &&
+      selectedRequirements.length > 0
+    ) {
+      handleRemoveRequirement(selectedRequirements.length - 1);
     }
   };
 
-  // 3. Form submit handler (as requested: console logs the form data without making API call)
+  // 3. Form submit handler (as requested: console logs the payload without making API call)
   const handleCreateJob = async (data) => {
-    const formattedPayload = {
+    const formattedJobPayload = {
       title: data.title.trim(),
       description: data.description.trim(),
       requirements: data.requirements,
@@ -130,13 +141,13 @@ export default function CreateJobPage() {
       position: Number(data.position),
     };
 
-    console.log("=========================================");
-    console.log("💼 CREATE JOB FORM DATA -");
-    console.log("=========================================");
+    console.log("CREATE JOB FORM DATA -");
+    for (const [key, value] of Object.entries(formattedJobPayload)) {
+      console.log(key, value);
+    }
+
     console.log("Raw Form Values:", data);
-    console.log("Formatted Payload for Backend:", formattedPayload);
     console.log("Selected Company:", company?.name || "No company");
-    console.log("=========================================");
 
     toast.success("Job form data logged to console! (API call pending)", {
       icon: "📋",
@@ -144,13 +155,14 @@ export default function CreateJobPage() {
     });
   };
 
-  const handleClearForm = () => {
+  // Form reset karne ka handler
+  const handleResetJobForm = () => {
     reset();
-    setSkillInput("");
+    setRequirementInput("");
     toast("Form cleared", { icon: "🧹" });
   };
 
-  // 4. Loading State while checking company registration
+  // 4. Loading State while checking company status
   if (isCompanyLoading) {
     return (
       <div className="flex min-h-[350px] w-full items-center justify-center">
@@ -255,9 +267,9 @@ export default function CreateJobPage() {
             <div className="space-y-3">
               <label className="block text-sm font-medium text-neutral-800">
                 Key Requirements & Skills *
-                {requirements.length > 0 && (
+                {selectedRequirements.length > 0 && (
                   <span className="ml-2 font-normal text-xs text-neutral-500">
-                    ({requirements.length} added)
+                    ({selectedRequirements.length} added)
                   </span>
                 )}
               </label>
@@ -266,9 +278,9 @@ export default function CreateJobPage() {
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
+                  value={requirementInput}
+                  onChange={(e) => setRequirementInput(e.target.value)}
+                  onKeyDown={handleRequirementKeyDown}
                   placeholder="Type a skill and press Enter (e.g. React, Docker, Node.js)"
                   className="h-11 flex-1 rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100"
                 />
@@ -276,8 +288,8 @@ export default function CreateJobPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => handleAddSkill()}
-                  disabled={!skillInput.trim()}
+                  onClick={() => handleAddRequirement()}
+                  disabled={!requirementInput.trim()}
                   leftIcon={<Plus size={15} />}
                   className="h-11 px-4 text-xs font-semibold"
                 >
@@ -292,19 +304,19 @@ export default function CreateJobPage() {
               )}
 
               {/* Active Tags / Badges */}
-              {requirements.length > 0 && (
+              {selectedRequirements.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {requirements.map((req, index) => (
+                  {selectedRequirements.map((requirement, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-2xs"
                     >
-                      <span>{req}</span>
+                      <span>{requirement}</span>
                       <button
                         type="button"
-                        onClick={() => handleRemoveSkill(index)}
+                        onClick={() => handleRemoveRequirement(index)}
                         className="rounded-full p-0.5 text-neutral-400 hover:bg-neutral-800 hover:text-white transition cursor-pointer"
-                        title={`Remove ${req}`}
+                        title={`Remove ${requirement}`}
                       >
                         <X size={13} />
                       </button>
@@ -321,20 +333,21 @@ export default function CreateJobPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  {SUGGESTED_SKILLS.filter(
-                    (s) =>
-                      !requirements.some(
-                        (r) => r.toLowerCase() === s.toLowerCase(),
+                  {SUGGESTED_REQUIREMENTS.filter(
+                    (suggested) =>
+                      !selectedRequirements.some(
+                        (existing) =>
+                          existing.toLowerCase() === suggested.toLowerCase(),
                       ),
-                  ).map((skill) => (
+                  ).map((suggestedSkill) => (
                     <button
-                      key={skill}
+                      key={suggestedSkill}
                       type="button"
-                      onClick={() => handleAddSkill(skill)}
+                      onClick={() => handleAddRequirement(suggestedSkill)}
                       className="inline-flex items-center gap-1 rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer active:scale-95"
                     >
                       <Plus size={11} className="text-neutral-400" />
-                      {skill}
+                      {suggestedSkill}
                     </button>
                   ))}
                 </div>
@@ -438,7 +451,7 @@ export default function CreateJobPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={handleClearForm}
+              onClick={handleResetJobForm}
               disabled={isSubmitting}
             >
               Clear Form
