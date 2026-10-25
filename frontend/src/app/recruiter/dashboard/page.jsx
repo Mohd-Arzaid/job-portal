@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   BriefcaseBusiness,
@@ -12,16 +13,47 @@ import Button from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
 import { useCompanyStore } from "@/store/company.store";
 import useRecruiterJobs from "@/hooks/use-recruiter-jobs";
+import { getApplicants } from "@/api-services/application.service";
 
 export default function RecruiterDashboardPage() {
   const user = useAuthStore((state) => state.user);
   const company = useCompanyStore((state) => state.company);
   const { recruiterJobs, isLoading: isJobsLoading } = useRecruiterJobs();
 
+  const [totalApplicants, setTotalApplicants] = useState(null);
+
   const rawName = user?.fullName || "Recruiter";
   const displayName =
     rawName.replace(/\s*\(\s*(?:student|recruiter)\s*\)/gi, "").trim() ||
     "Recruiter";
+
+  // Fetch real applicant counts across all jobs via API
+  useEffect(() => {
+    if (isJobsLoading) return;
+    if (!recruiterJobs || recruiterJobs.length === 0) {
+      setTotalApplicants(0);
+      return;
+    }
+    const fetchCounts = async () => {
+      try {
+        const results = await Promise.all(
+          recruiterJobs.map((job) =>
+            getApplicants(job._id).catch(() => ({ data: { applications: [] } }))
+          )
+        );
+        const total = results.reduce((sum, res) => {
+          const apps = Array.isArray(res?.data) ? res.data : [];
+          return sum + apps.length;
+        }, 0);
+        setTotalApplicants(total);
+      } catch {
+        setTotalApplicants(0);
+      }
+    };
+    fetchCounts();
+  }, [recruiterJobs, isJobsLoading]);
+
+  const isApplicantsLoading = totalApplicants === null;
 
   return (
     <div className="space-y-8">
@@ -76,8 +108,15 @@ export default function RecruiterDashboardPage() {
             </span>
             <Users size={18} />
           </div>
-          <p className="mt-3 text-3xl font-bold tracking-tight text-neutral-950">0</p>
-          <p className="mt-2 text-xs text-neutral-500">Across all postings</p>
+          <p className="mt-3 text-3xl font-bold tracking-tight text-neutral-950">
+            {isJobsLoading || isApplicantsLoading ? "..." : totalApplicants}
+          </p>
+          <Link
+            href="/recruiter/applicants"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-neutral-600 hover:text-neutral-950 transition"
+          >
+            View applicants <ArrowUpRight size={13} />
+          </Link>
         </div>
 
         <div className="overflow-hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/10 transition hover:ring-black/20">
