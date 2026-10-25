@@ -169,7 +169,8 @@ export default function CompanyPage() {
                   <img
                     src={company.logo}
                     alt={company.name}
-                    className="size-full object-contain"
+                    className="size-full object-
+                    "
                   />
                 ) : (
                   <Building2 className="size-9 text-neutral-400" />
@@ -320,12 +321,12 @@ export default function CompanyPage() {
 
             <div className="flex flex-col gap-4 rounded-xl border border-dashed border-neutral-300 p-5 transition hover:border-neutral-400 bg-neutral-50/40 sm:flex-row sm:items-center">
               {/* Logo Preview Avatar */}
-              <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-2xs">
+              <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-2xs p-1">
                 {selectedCompanyLogoUrl ? (
                   <img
                     src={selectedCompanyLogoUrl}
                     alt="Company Logo Preview"
-                    className="size-full object-cover"
+                    className="size-full object-contain"
                   />
                 ) : (
                   <Building2 className="size-8 text-neutral-400" />
