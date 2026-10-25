@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Users,
   BriefcaseBusiness,
   Search,
-  Filter,
   Mail,
   Phone,
   FileText,
@@ -14,16 +14,22 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  User,
+  ArrowLeft,
   ExternalLink,
-  Download,
+  ChevronDown,
+  LoaderCircle,
+  PlusCircle,
+  MapPin,
+  DollarSign,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "@/components/ui/button";
-import { getApplicants, updateApplicationStatus } from "@/api-services/application.service";
+import {
+  getApplicants,
+  updateApplicationStatus,
+} from "@/api-services/application.service";
 import useRecruiterJobs from "@/hooks/use-recruiter-jobs";
-import { cn } from "@/lib/utils";
 
 const STATUS_FILTERS = [
   { label: "All", value: "all" },
@@ -32,32 +38,109 @@ const STATUS_FILTERS = [
   { label: "Rejected", value: "Rejected" },
 ];
 
-const STATUS_CONFIG = {
-  Pending: {
-    color: "bg-amber-50 text-amber-700 border-amber-200",
-    icon: Clock,
-    dotColor: "bg-amber-500",
-  },
-  Accepted: {
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    icon: CheckCircle2,
-    dotColor: "bg-emerald-500",
-  },
-  Rejected: {
-    color: "bg-red-50 text-red-700 border-red-200",
-    icon: XCircle,
-    dotColor: "bg-red-500",
-  },
-};
+function ApplicantsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlJobId = searchParams.get("jobId");
 
-export default function RecruiterApplicantsPage() {
   const { recruiterJobs, isLoading: isJobsLoading } = useRecruiterJobs();
-  const [selectedJobId, setSelectedJobId] = useState("");
+
+  const [selectedJobId, setSelectedJobId] = useState(urlJobId || "");
   const [applicants, setApplicants] = useState([]);
   const [isLoadingApplicants, setIsLoadingApplicants] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [updatingStatus, setUpdatingStatus] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
+
+  // Sync selectedJobId when urlJobId or recruiterJobs changes
+  useEffect(() => {
+    if (urlJobId) {
+      setSelectedJobId(urlJobId);
+    } else if (!selectedJobId && recruiterJobs?.length > 0) {
+      setSelectedJobId(recruiterJobs[0]._id);
+    }
+  }, [urlJobId, recruiterJobs, selectedJobId]);
+
+  // Fetch applicants when selectedJobId changes
+  useEffect(() => {
+    if (!selectedJobId) {
+      setApplicants([]);
+      return;
+    }
+
+    let isMounted = true;
+    const loadApplicants = async () => {
+      setIsLoadingApplicants(true);
+      try {
+        const response = await getApplicants(selectedJobId);
+        if (isMounted) {
+          setApplicants(response.data || []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("Error fetching applicants:", error);
+          toast.error(
+            error?.response?.data?.message || "Failed to fetch applicants",
+          );
+          setApplicants([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingApplicants(false);
+        }
+      }
+    };
+
+    loadApplicants();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedJobId]);
+
+  // Job change handler
+  const handleJobChange = (newJobId) => {
+    setSelectedJobId(newJobId);
+    setStatusFilter("all");
+    setSearchQuery("");
+    router.replace(`/recruiter/applicants?jobId=${newJobId}`, {
+      scroll: false,
+    });
+  };
+
+  // Status update handler
+  const handleStatusUpdate = async (applicationId, newStatus) => {
+    setUpdatingId(applicationId);
+    try {
+      await updateApplicationStatus(applicationId, newStatus);
+
+      setApplicants((prev) =>
+        prev.map((app) =>
+          app._id === applicationId ? { ...app, status: newStatus } : app,
+        ),
+      );
+
+      toast.success(`Application marked as ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error(
+        error?.response?.data?.message || "Failed to update application status",
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // Active Job Details
+  const selectedJob = useMemo(() => {
+    return recruiterJobs?.find((j) => j._id === selectedJobId) || null;
+  }, [recruiterJobs, selectedJobId]);
+
+  // Format salary
+  const formatSalary = (amount) => {
+    if (!amount) return "";
+    if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)} LPA`;
+    return `₹${Number(amount).toLocaleString("en-IN")}`;
+  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -66,225 +149,198 @@ export default function RecruiterApplicantsPage() {
       month: "short",
       day: "numeric",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
-  // Fetch applicants for selected job
-  const fetchApplicants = async (jobId) => {
-    if (!jobId) return;
+  // Filtered applicants
+  const filteredApplicants = useMemo(() => {
+    return applicants.filter((app) => {
+      const matchesStatus =
+        statusFilter === "all" || app.status === statusFilter;
+      const applicantName = (app.applicant?.fullName || "").toLowerCase();
+      const applicantEmail = (app.applicant?.email || "").toLowerCase();
+      const applicantSkills = (app.applicant?.profile?.skills || [])
+        .join(" ")
+        .toLowerCase();
+      const query = searchQuery.trim().toLowerCase();
 
-    setIsLoadingApplicants(true);
-    try {
-      const response = await getApplicants(jobId);
-      setApplicants(response.data || []);
-    } catch (error) {
-      console.error("Error fetching applicants:", error);
-      toast.error(error?.response?.data?.message || "Failed to fetch applicants");
-      setApplicants([]);
-    } finally {
-      setIsLoadingApplicants(false);
-    }
-  };
+      const matchesSearch =
+        !query ||
+        applicantName.includes(query) ||
+        applicantEmail.includes(query) ||
+        applicantSkills.includes(query);
 
-  // Handle job selection
-  const handleJobSelect = (jobId) => {
-    setSelectedJobId(jobId);
-    setStatusFilter("all");
-    setSearchQuery("");
-  };
-
-  // Update application status
-  const handleStatusUpdate = async (applicationId, newStatus) => {
-    setUpdatingStatus(applicationId);
-    try {
-      await updateApplicationStatus(applicationId, newStatus);
-      
-      // Update local state
-      setApplicants((prev) =>
-        prev.map((app) =>
-          app._id === applicationId ? { ...app, status: newStatus } : app,
-        ),
-      );
-      
-      toast.success(`Application ${newStatus.toLowerCase()} successfully`);
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error(
-        error?.response?.data?.message || "Failed to update application status",
-      );
-    } finally {
-      setUpdatingStatus(null);
-    }
-  };
-
-  // Fetch applicants when job is selected
-  useEffect(() => {
-    if (selectedJobId) {
-      fetchApplicants(selectedJobId);
-    }
-  }, [selectedJobId]);
-
-  // Filter applicants
-  const filteredApplicants = applicants.filter((app) => {
-    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
-    const matchesSearch =
-      !searchQuery ||
-      app.applicant?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.applicant?.email?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
-
-  // Get selected job details
-  const selectedJob = recruiterJobs?.find((job) => job._id === selectedJobId);
+      return matchesStatus && matchesSearch;
+    });
+  }, [applicants, statusFilter, searchQuery]);
 
   // Status counts
-  const statusCounts = {
-    all: applicants.length,
-    Pending: applicants.filter((app) => app.status === "Pending").length,
-    Accepted: applicants.filter((app) => app.status === "Accepted").length,
-    Rejected: applicants.filter((app) => app.status === "Rejected").length,
+  const statusCounts = useMemo(() => {
+    return {
+      all: applicants.length,
+      Pending: applicants.filter((a) => a.status === "Pending").length,
+      Accepted: applicants.filter((a) => a.status === "Accepted").length,
+      Rejected: applicants.filter((a) => a.status === "Rejected").length,
+    };
+  }, [applicants]);
+
+  // Helper to sanitize candidate name and remove "(Recruiter)"
+  const cleanCandidateName = (name) => {
+    if (!name) return "Anonymous Candidate";
+    return name.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "Candidate";
   };
 
   return (
     <div className="w-full space-y-6">
-      {/* Header */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between border-b border-neutral-200/80 pb-6">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 md:text-3xl">
-            Job Applicants
-          </h1>
-          <p className="mt-1.5 max-w-[68ch] text-sm text-neutral-500">
-            Review and manage applications received for your job postings.
-          </p>
-        </div>
-      </header>
+      {/* Top Breadcrumb & Page Header */}
+      <div className="border-b border-neutral-200/80 pb-6">
+        <Link
+          href="/recruiter/jobs"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-900 transition mb-3"
+        >
+          <ArrowLeft size={14} />
+          Back to My Job Postings
+        </Link>
 
-      {/* Job Selection */}
-      <section className="overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-black/10">
-        <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900 mb-4">
-          <BriefcaseBusiness size={18} className="text-neutral-700" />
-          <span>Select Job Posting</span>
-        </div>
-
-        {isJobsLoading ? (
-          <div className="flex min-h-[100px] items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="size-6 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
-              <p className="text-xs text-neutral-500">Loading job postings...</p>
-            </div>
-          </div>
-        ) : recruiterJobs?.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-neutral-500">
-              You haven't posted any jobs yet.
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
+              Job Applicants
+            </h1>
+            <p className="mt-1 text-sm text-neutral-500">
+              Review received candidate profiles, evaluate resumes, and make hiring decisions.
             </p>
-            <Link href="/recruiter/jobs/create" className="mt-3 inline-block">
-              <Button size="sm" leftIcon={<BriefcaseBusiness size={15} />}>
-                Post Your First Job
-              </Button>
-            </Link>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {recruiterJobs.map((job) => (
-              <button
-                key={job._id}
-                onClick={() => handleJobSelect(job._id)}
-                className={cn(
-                  "flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition cursor-pointer",
-                  selectedJobId === job._id
-                    ? "border-neutral-900 bg-neutral-900 text-white shadow-sm"
-                    : "border-neutral-200 bg-white text-neutral-900 hover:border-neutral-300 hover:bg-neutral-50",
-                )}
-              >
-                <div className="flex items-start justify-between w-full gap-2">
-                  <h3 className="font-semibold text-sm line-clamp-1">
-                    {job.title}
-                  </h3>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                      selectedJobId === job._id
-                        ? "bg-white/20 text-white"
-                        : "bg-neutral-100 text-neutral-700",
-                    )}
-                  >
-                    {job.jobType}
-                  </span>
-                </div>
-                <p
-                  className={cn(
-                    "text-xs line-clamp-2",
-                    selectedJobId === job._id
-                      ? "text-white/80"
-                      : "text-neutral-500",
-                  )}
-                >
-                  {job.description}
-                </p>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
 
-      {/* Applicants Section - Show only when job is selected */}
-      {selectedJobId && (
-        <>
-          {/* Selected Job Info Bar */}
-          <section className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-white">
-                <BriefcaseBusiness size={18} />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-semibold text-sm text-neutral-950 truncate">
-                  {selectedJob?.title}
-                </h3>
-                <p className="text-xs text-neutral-500">
-                  {statusCounts.all} {statusCounts.all === 1 ? "application" : "applications"} received
-                </p>
+          {/* Job Picker Selector */}
+          {recruiterJobs?.length > 0 && (
+            <div className="relative min-w-[240px] max-w-sm sm:self-start">
+              <label
+                htmlFor="job-selector"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-500 mb-1"
+              >
+                Select Job Posting
+              </label>
+              <div className="relative">
+                <select
+                  id="job-selector"
+                  value={selectedJobId}
+                  onChange={(e) => handleJobChange(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 pr-9 text-sm font-medium text-neutral-900 shadow-xs outline-none transition hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100 cursor-pointer"
+                >
+                  {recruiterJobs.map((job) => (
+                    <option key={job._id} value={job._id}>
+                      {job.title} ({job.jobType})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400"
+                />
               </div>
             </div>
-            <Link
-              href={`/jobs/${selectedJobId}`}
-              target="_blank"
-              className="shrink-0"
-            >
-              <Button variant="ghost" size="sm" rightIcon={<ExternalLink size={13} />}>
-                View Job
-              </Button>
-            </Link>
-          </section>
+          )}
+        </div>
+      </div>
 
-          {/* Filters and Search */}
-          <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Status Filter Pills */}
-            <div className="flex flex-wrap gap-2">
-              {STATUS_FILTERS.map((filter) => {
-                const isActive = statusFilter === filter.value;
-                const count = statusCounts[filter.value];
+      {/* Main Content Area */}
+      {isJobsLoading ? (
+        <div className="flex min-h-[300px] w-full items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <LoaderCircle size={28} className="animate-spin text-neutral-400" />
+            <p className="text-xs text-neutral-500">Loading job postings...</p>
+          </div>
+        </div>
+      ) : recruiterJobs?.length === 0 ? (
+        <div className="rounded-2xl border border-neutral-200/80 bg-white p-12 text-center shadow-xs">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600">
+            <BriefcaseBusiness size={22} />
+          </div>
+          <h2 className="mt-4 text-base font-semibold text-neutral-950">
+            No active job postings
+          </h2>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-neutral-500">
+            You haven't posted any jobs yet. Create a job posting to start receiving applications.
+          </p>
+          <div className="mt-6">
+            <Link href="/recruiter/jobs/create">
+              <Button leftIcon={<PlusCircle size={15} />}>Post a Job</Button>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Active Job Summary Card */}
+          {selectedJob && (
+            <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/70 p-5 shadow-xs">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-neutral-950">
+                      {selectedJob.title}
+                    </h2>
+                    <span className="rounded-md bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
+                      {selectedJob.jobType}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                    {selectedJob.location && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin size={13} className="text-neutral-400" />
+                        {selectedJob.location}
+                      </span>
+                    )}
+                    {selectedJob.salary && (
+                      <span className="inline-flex items-center gap-1">
+                        <DollarSign size={13} className="text-neutral-400" />
+                        {formatSalary(selectedJob.salary)}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                      <Users size={13} className="text-neutral-400" />
+                      {applicants.length} {applicants.length === 1 ? "applicant" : "applicants"}
+                    </span>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/jobs/${selectedJob._id}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-xs transition hover:bg-neutral-50 hover:text-neutral-950 self-start sm:self-center"
+                >
+                  <span>Public View</span>
+                  <ExternalLink size={12} className="text-neutral-400" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Filters & Search Row */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Status Pills */}
+            <div className="inline-flex rounded-xl border border-neutral-200 bg-neutral-100/80 p-1">
+              {STATUS_FILTERS.map((f) => {
+                const isActive = statusFilter === f.value;
+                const count = statusCounts[f.value];
                 return (
                   <button
-                    key={filter.value}
-                    onClick={() => setStatusFilter(filter.value)}
-                    className={cn(
-                      "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition cursor-pointer",
+                    key={f.value}
+                    onClick={() => setStatusFilter(f.value)}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
                       isActive
-                        ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50",
-                    )}
+                        ? "bg-white text-neutral-950 shadow-xs font-semibold"
+                        : "text-neutral-600 hover:text-neutral-950"
+                    }`}
                   >
-                    <span>{filter.label}</span>
+                    <span>{f.label}</span>
                     <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                      className={`rounded-full px-1.5 py-0.2 text-[10px] font-semibold ${
                         isActive
-                          ? "bg-white/20 text-white"
-                          : "bg-neutral-100 text-neutral-600",
-                      )}
+                          ? "bg-neutral-900 text-white"
+                          : "bg-neutral-200 text-neutral-700"
+                      }`}
                     >
                       {count}
                     </span>
@@ -293,185 +349,228 @@ export default function RecruiterApplicantsPage() {
               })}
             </div>
 
-            {/* Search Box */}
-            <div className="relative">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-72">
               <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+                size={15}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
               />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name or email..."
-                className="h-9 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-4 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100 sm:w-64"
+                placeholder="Search candidates by name, email, skills..."
+                className="h-9 w-full rounded-xl border border-neutral-200 bg-white pl-9 pr-3 text-xs text-neutral-900 placeholder:text-neutral-400 shadow-xs outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100"
               />
             </div>
-          </section>
+          </div>
 
           {/* Applicants List */}
-          <section className="space-y-4">
-            {isLoadingApplicants ? (
-              <div className="flex min-h-[300px] items-center justify-center rounded-xl bg-white p-12 shadow-sm ring-1 ring-black/10">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="size-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
-                  <p className="text-xs text-neutral-500">Loading applicants...</p>
-                </div>
+          {isLoadingApplicants ? (
+            <div className="flex min-h-[260px] w-full items-center justify-center rounded-xl border border-neutral-200/80 bg-white p-8">
+              <div className="flex flex-col items-center gap-2.5">
+                <LoaderCircle size={24} className="animate-spin text-neutral-400" />
+                <p className="text-xs text-neutral-500">Loading applicants...</p>
               </div>
-            ) : filteredApplicants.length === 0 ? (
-              <div className="overflow-hidden rounded-xl bg-white p-12 text-center shadow-sm ring-1 ring-black/10">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600">
-                  <Users size={24} />
-                </div>
-                <h2 className="mt-4 text-base font-semibold text-neutral-950">
-                  {applicants.length === 0
-                    ? "No applications yet"
-                    : "No matching applicants"}
-                </h2>
-                <p className="mx-auto mt-1 max-w-sm text-sm text-neutral-500">
-                  {applicants.length === 0
-                    ? "Applications will appear here once candidates start applying for this position."
-                    : "Try adjusting your filters or search query."}
-                </p>
+            </div>
+          ) : filteredApplicants.length === 0 ? (
+            <div className="rounded-xl border border-neutral-200/80 bg-white p-12 text-center shadow-xs">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500">
+                <Users size={22} />
               </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredApplicants.map((application) => {
-                  const applicant = application.applicant;
-                  const statusConfig = STATUS_CONFIG[application.status];
-                  const StatusIcon = statusConfig.icon;
-                  const isUpdating = updatingStatus === application._id;
+              <h3 className="mt-4 text-sm font-semibold text-neutral-950">
+                {applicants.length === 0
+                  ? "No applications received yet"
+                  : "No matching candidates found"}
+              </h3>
+              <p className="mx-auto mt-1 max-w-sm text-xs text-neutral-500">
+                {applicants.length === 0
+                  ? "Candidate applications for this job will be listed here as soon as they apply."
+                  : "Try clearing your search query or switching the status filter tab."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredApplicants.map((application) => {
+                const applicant = application.applicant;
+                const candidateName = cleanCandidateName(applicant?.fullName);
+                const isUpdating = updatingId === application._id;
 
-                  return (
-                    <div
-                      key={application._id}
-                      className="overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-black/10 transition hover:ring-black/20"
-                    >
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        {/* Applicant Info */}
-                        <div className="flex-1 space-y-4">
-                          {/* Header with status */}
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="flex items-start gap-3">
-                              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-600">
-                                <User size={20} />
-                              </div>
-                              <div>
-                                <h3 className="text-base font-semibold text-neutral-950">
-                                  {applicant?.fullName || "Unknown Applicant"}
-                                </h3>
-                                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
-                                  {applicant?.email && (
-                                    <span className="inline-flex items-center gap-1">
-                                      <Mail size={12} className="text-neutral-400" />
-                                      {applicant.email}
-                                    </span>
-                                  )}
-                                  {applicant?.phoneNumber && (
-                                    <span className="inline-flex items-center gap-1">
-                                      <Phone size={12} className="text-neutral-400" />
-                                      {applicant.phoneNumber}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                return (
+                  <div
+                    key={application._id}
+                    className="overflow-hidden rounded-xl border border-neutral-200/80 bg-white p-5 shadow-xs transition hover:border-neutral-300"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      {/* Left: Candidate Info */}
+                      <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                        {/* Avatar */}
+                        <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-900 text-sm font-semibold text-white">
+                          {applicant?.profile?.profilePhoto ? (
+                            <img
+                              src={applicant.profile.profilePhoto}
+                              alt={candidateName}
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            candidateName.charAt(0)?.toUpperCase() || "C"
+                          )}
+                        </div>
 
-                            <span
-                              className={cn(
-                                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium",
-                                statusConfig.color,
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "size-1.5 rounded-full",
-                                  statusConfig.dotColor,
-                                )}
-                              />
-                              {application.status}
-                            </span>
+                        {/* Name & Contact */}
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base font-semibold text-neutral-950">
+                              {candidateName}
+                            </h3>
+
+                            {/* Status Badge */}
+                            {application.status === "Pending" && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800">
+                                <Clock size={11} className="text-amber-600" />
+                                Pending
+                              </span>
+                            )}
+                            {application.status === "Accepted" && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-800">
+                                <CheckCircle2 size={11} className="text-emerald-600" />
+                                Accepted
+                              </span>
+                            )}
+                            {application.status === "Rejected" && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-medium text-red-800">
+                                <XCircle size={11} className="text-red-600" />
+                                Rejected
+                              </span>
+                            )}
                           </div>
 
-                          {/* Bio/Skills */}
+                          {/* Email, Phone, Applied Date */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500">
+                            {applicant?.email && (
+                              <span className="inline-flex items-center gap-1">
+                                <Mail size={12} className="text-neutral-400" />
+                                {applicant.email}
+                              </span>
+                            )}
+                            {applicant?.phoneNumber && (
+                              <span className="inline-flex items-center gap-1">
+                                <Phone size={12} className="text-neutral-400" />
+                                {applicant.phoneNumber}
+                              </span>
+                            )}
+                            {application.createdAt && (
+                              <span className="inline-flex items-center gap-1 text-neutral-400">
+                                <Calendar size={12} />
+                                Applied {formatDate(application.createdAt)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Bio */}
                           {applicant?.profile?.bio && (
-                            <p className="text-sm text-neutral-600 leading-relaxed">
+                            <p className="line-clamp-2 pt-1 text-xs text-neutral-600">
                               {applicant.profile.bio}
                             </p>
                           )}
 
+                          {/* Skills Pills */}
                           {applicant?.profile?.skills?.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-1.5 pt-1.5">
                               {applicant.profile.skills.map((skill, idx) => (
                                 <span
                                   key={idx}
-                                  className="rounded-md bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-700"
+                                  className="rounded-md bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-700"
                                 >
                                   {skill}
                                 </span>
                               ))}
                             </div>
                           )}
-
-                          {/* Resume Link */}
-                          {applicant?.profile?.resume && (
-                            <a
-                              href={applicant.profile.resume}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-950 transition"
-                            >
-                              <FileText size={14} />
-                              <span>View Resume</span>
-                              <Download size={12} />
-                            </a>
-                          )}
-
-                          {/* Applied Date */}
-                          <div className="flex items-center gap-1 text-xs text-neutral-400">
-                            <Calendar size={12} />
-                            Applied {formatDate(application.createdAt)}
-                          </div>
                         </div>
+                      </div>
 
-                        {/* Action Buttons */}
-                        {application.status === "Pending" && (
-                          <div className="flex gap-2 lg:flex-col lg:shrink-0">
-                            <Button
+                      {/* Right: Actions */}
+                      <div className="flex flex-wrap items-center gap-2 pt-2 lg:pt-0 shrink-0">
+                        {/* Resume button */}
+                        {applicant?.profile?.resume ? (
+                          <a
+                            href={applicant.profile.resume}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-xs transition hover:bg-neutral-50 hover:text-neutral-950"
+                          >
+                            <FileText size={13} className="text-neutral-400" />
+                            <span>View Resume</span>
+                            <ExternalLink size={11} className="text-neutral-400" />
+                          </a>
+                        ) : (
+                          <span className="text-[11px] text-neutral-400 italic px-2">
+                            No resume provided
+                          </span>
+                        )}
+
+                        {/* Status Change Buttons */}
+                        <div className="flex items-center gap-1.5">
+                          {application.status !== "Accepted" && (
+                            <button
+                              type="button"
                               onClick={() =>
                                 handleStatusUpdate(application._id, "Accepted")
                               }
                               disabled={isUpdating}
-                              variant="default"
-                              size="sm"
-                              leftIcon={<CheckCircle2 size={14} />}
-                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 lg:flex-initial lg:min-w-[120px]"
+                              className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-xs transition hover:bg-emerald-700 disabled:opacity-50 cursor-pointer"
                             >
-                              {isUpdating ? "Updating..." : "Accept"}
-                            </Button>
-                            <Button
+                              {isUpdating ? (
+                                <LoaderCircle size={12} className="animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={12} />
+                              )}
+                              <span>Accept</span>
+                            </button>
+                          )}
+
+                          {application.status !== "Rejected" && (
+                            <button
+                              type="button"
                               onClick={() =>
                                 handleStatusUpdate(application._id, "Rejected")
                               }
                               disabled={isUpdating}
-                              variant="outline"
-                              size="sm"
-                              leftIcon={<XCircle size={14} />}
-                              className="flex-1 border-red-200 text-red-700 hover:bg-red-50 lg:flex-initial lg:min-w-[120px]"
+                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 shadow-xs transition hover:bg-red-50 disabled:opacity-50 cursor-pointer"
                             >
-                              {isUpdating ? "Updating..." : "Reject"}
-                            </Button>
-                          </div>
-                        )}
+                              {isUpdating ? (
+                                <LoaderCircle size={12} className="animate-spin" />
+                              ) : (
+                                <XCircle size={12} />
+                              )}
+                              <span>Reject</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
+  );
+}
+
+export default function RecruiterApplicantsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[300px] w-full items-center justify-center">
+          <LoaderCircle size={28} className="animate-spin text-neutral-400" />
+        </div>
+      }
+    >
+      <ApplicantsContent />
+    </Suspense>
   );
 }

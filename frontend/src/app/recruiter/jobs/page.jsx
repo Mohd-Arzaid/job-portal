@@ -166,14 +166,30 @@ export default function RecruiterJobsListPage() {
                     )}
                   </div>
 
-                  <div className="shrink-0 pt-2 sm:pt-0">
+                  <div className="flex flex-col sm:items-end justify-between gap-3 shrink-0 pt-2 sm:pt-0">
                     <Link
                       href={`/jobs/${job._id}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 hover:text-neutral-950 transition"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-950 transition self-start sm:self-end"
                     >
                       <span>Public View</span>
                       <ExternalLink size={13} />
+                    </Link>
+
+                    <Link href={`/recruiter/applicants?jobId=${job._id}`}>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        leftIcon={<Users size={14} />}
+                        className="w-full sm:w-auto text-xs"
+                      >
+                        View Applicants
+                        {typeof job.applications?.length === "number" && (
+                          <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                            {job.applications.length}
+                          </span>
+                        )}
+                      </Button>
                     </Link>
                   </div>
                 </div>

@@ -19,6 +19,10 @@ export default function ProfilePage() {
   const user = useAuthStore((state) => state.user);
   const { handleLogout, isLoggingOut } = useLogout();
 
+  const rawName = user?.fullName || "User Name";
+  const displayName =
+    rawName.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "User Name";
+
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-white px-4 py-10 sm:px-6 sm:py-14">
       <div className="mx-auto max-w-4xl">
@@ -45,19 +49,19 @@ export default function ProfilePage() {
               {user?.profile?.profilePhoto ? (
                 <img
                   src={user.profile.profilePhoto}
-                  alt={user.fullName || "Profile photo"}
+                  alt={displayName}
                   className="size-full object-cover"
                 />
               ) : (
                 <span className="text-2xl font-semibold text-neutral-700">
-                  {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+                  {displayName.charAt(0)?.toUpperCase() || "U"}
                 </span>
               )}
             </div>
 
             <div className="min-w-0 flex-1">
               <h2 className="break-words text-xl font-semibold tracking-tight text-neutral-950 sm:text-2xl">
-                {user?.fullName || "User Name"}
+                {displayName}
               </h2>
 
               <p className="mt-1 break-all text-sm text-neutral-500">
@@ -135,7 +139,7 @@ export default function ProfilePage() {
                 </dt>
 
                 <dd className="mt-3 break-words text-sm font-medium text-neutral-900">
-                  {user?.fullName || "N/A"}
+                  {displayName}
                 </dd>
               </div>
 

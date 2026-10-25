@@ -52,7 +52,8 @@ export default function Navbar() {
   const { handleLogout, isLoggingOut } = useLogout();
 
   const isRecruiter = user?.role === "recruiter";
-  const fullName = user?.fullName || user?.fullname || "User";
+  const rawName = user?.fullName || user?.fullname || "User";
+  const fullName = rawName.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "User";
   const profilePhoto = user?.profile?.profilePhoto;
 
   const navLinks = isRecruiter
@@ -60,7 +61,6 @@ export default function Navbar() {
         { href: "/", label: "Home" },
         { href: "/jobs", label: "Find Jobs" },
         { href: "/recruiter/dashboard", label: "Dashboard" },
-        { href: "/recruiter/jobs/create", label: "Post a Job" },
       ]
     : [
         { href: "/", label: "Home" },

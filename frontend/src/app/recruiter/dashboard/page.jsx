@@ -18,6 +18,10 @@ export default function RecruiterDashboardPage() {
   const company = useCompanyStore((state) => state.company);
   const { recruiterJobs, isLoading: isJobsLoading } = useRecruiterJobs();
 
+  const rawName = user?.fullName || "Recruiter";
+  const displayName =
+    rawName.replace(/\s*\(\s*recruiter\s*\)/gi, "").trim() || "Recruiter";
+
   return (
     <div className="space-y-8">
       {/* Dashboard Header */}
@@ -29,7 +33,7 @@ export default function RecruiterDashboardPage() {
           </div>
 
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
-            Welcome back, {user?.fullName || "Recruiter"}
+            Welcome back, {displayName}
           </h1>
 
           <p className="mt-1 text-sm text-neutral-500">
