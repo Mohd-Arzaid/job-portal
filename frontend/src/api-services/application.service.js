@@ -71,10 +71,10 @@ export const getApplicants = async (jobId) => {
   return response.data;
 };
 
-// PUT /api/v1/application/:applicationId/status
+// PATCH /api/v1/application/:applicationId/status
 // Recruiter ke liye application status update karne ki API call
 export const updateApplicationStatus = async (applicationId, status) => {
-  const response = await axios.put(
+  const response = await axios.patch(
     `${UPDATE_APPLICATION_STATUS_API}/${applicationId}/status`,
     { status },
     { withCredentials: true },

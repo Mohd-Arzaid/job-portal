@@ -403,7 +403,7 @@ function ApplicantsContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search candidates by name, email, skills..."
+                placeholder="Search by name, email"
                 className="h-9 w-full rounded-xl border border-neutral-200 bg-white pl-9 pr-3 text-xs text-neutral-900 shadow-xs outline-none transition placeholder:text-neutral-400 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-100"
               />
             </div>
@@ -550,7 +550,7 @@ function ApplicantsContent() {
                       {/* Actions */}
                       <div className="flex shrink-0 flex-wrap items-center gap-2 pt-2 lg:pt-0">
                         {/* Resume */}
-                        {applicant?.profile?.resume ? (
+                        {applicant?.profile?.resume && (
                           <a
                             href={applicant.profile.resume}
                             target="_blank"
@@ -564,10 +564,6 @@ function ApplicantsContent() {
                               className="text-neutral-400"
                             />
                           </a>
-                        ) : (
-                          <span className="px-2 text-[11px] italic text-neutral-400">
-                            No resume provided
-                          </span>
                         )}
 
                         {/* Status Buttons */}
